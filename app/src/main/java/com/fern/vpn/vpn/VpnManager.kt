@@ -49,19 +49,13 @@ object VpnManager {
     /** Cloudflare listens on several UDP ports; carriers often block the default one. */
     private val primaryEndpoints = listOf(
         "162.159.192.1:2408",
-        "162.159.192.7:2408",
-        "162.159.193.1:2408",
-        "162.159.193.10:2408",
         "188.114.96.1:2408",
-        "188.114.97.1:2408"
+        "162.159.193.1:2408"
     )
 
     private val fallbackEndpoints = listOf(
         "162.159.192.1:500",
-        "162.159.192.1:1701",
-        "162.159.192.1:4500",
-        "188.114.96.1:500",
-        "188.114.96.1:4500"
+        "162.159.192.1:4500"
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -168,7 +162,7 @@ object VpnManager {
                         } catch (throwable: Throwable) {
                             log("Не поднялся: " + describe(throwable))
                             runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
-                            delay(350)
+                            delay(200)
                             continue
                         }
 
@@ -179,7 +173,7 @@ object VpnManager {
 
                         log("Нет трафика через " + sanitize(candidate))
                         runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
-                        delay(450)
+                        delay(250)
                     }
 
                     if (working == null) {
@@ -361,7 +355,7 @@ object VpnManager {
         return list
             .filter { candidate -> candidate.substringBefore(':').any { it.isDigit() } }
             .distinct()
-            .take(10)
+            .take(7)
     }
 
     /**
@@ -393,20 +387,20 @@ object VpnManager {
     ) {
         app.startService(Intent(app, FernVpnService::class.java))
         var waited = 0
-        while (FernVpnService.instance == null && waited < 2000) {
-            delay(100)
-            waited += 100
+        while (FernVpnService.instance == null && waited < 1200) {
+            delay(80)
+            waited += 80
         }
         wireGuard.setState(warpTunnel, Tunnel.State.UP, config)
     }
 
     /** Sends one real request through the tunnel; a dead handshake never answers. */
     private suspend fun probeTunnel(): Boolean = withContext(Dispatchers.IO) {
-        delay(250)
+        delay(120)
         try {
             val connection = (URL(PROBE_URL).openConnection() as HttpsURLConnection).apply {
-                connectTimeout = 2500
-                readTimeout = 2500
+                connectTimeout = 2000
+                readTimeout = 2000
                 setRequestProperty("User-Agent", "AsterVPN")
                 setRequestProperty("Connection", "close")
             }

@@ -72,6 +72,11 @@ object SettingsRepository {
     private val _configName = MutableStateFlow<String?>(null)
     val configName: StateFlow<String?> = _configName.asStateFlow()
 
+    /** Reads the saved language without initialising the whole repository. */
+    fun storedLanguage(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_LANG, "system") ?: "system"
+
     fun init(context: Context) {
         if (this::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

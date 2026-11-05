@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fern.vpn.R
 import com.fern.vpn.data.SettingsRepository
+import com.fern.vpn.findActivity
 import com.fern.vpn.ui.theme.Palettes
 import com.fern.vpn.vpn.VpnManager
 import kotlinx.coroutines.delay
@@ -401,14 +403,14 @@ private fun AppearanceTab(
     language: String
 ) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
 
     GlassCard {
         Text(
             text = stringResource(R.string.theme),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(6.dp))
+        )        Spacer(Modifier.height(6.dp))
         ChoiceRow(
             label = stringResource(R.string.theme_system),
             selected = themeMode == "system",
@@ -493,17 +495,26 @@ private fun AppearanceTab(
         ChoiceRow(
             label = stringResource(R.string.language_system),
             selected = language == "system",
-            onClick = { SettingsRepository.setLanguage("system") }
+            onClick = {
+                SettingsRepository.setLanguage("system")
+                runCatching { context.findActivity()?.recreate() }
+            }
         )
         ChoiceRow(
             label = stringResource(R.string.language_ru),
             selected = language == "ru",
-            onClick = { SettingsRepository.setLanguage("ru") }
+            onClick = {
+                SettingsRepository.setLanguage("ru")
+                runCatching { context.findActivity()?.recreate() }
+            }
         )
         ChoiceRow(
             label = stringResource(R.string.language_en),
             selected = language == "en",
-            onClick = { SettingsRepository.setLanguage("en") }
+            onClick = {
+                SettingsRepository.setLanguage("en")
+                runCatching { context.findActivity()?.recreate() }
+            }
         )
     }
 }
