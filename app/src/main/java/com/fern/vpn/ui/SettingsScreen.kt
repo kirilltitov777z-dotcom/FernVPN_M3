@@ -410,7 +410,8 @@ private fun AppearanceTab(
             text = stringResource(R.string.theme),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
-        )        Spacer(Modifier.height(6.dp))
+        )
+        Spacer(Modifier.height(6.dp))
         ChoiceRow(
             label = stringResource(R.string.theme_system),
             selected = themeMode == "system",
