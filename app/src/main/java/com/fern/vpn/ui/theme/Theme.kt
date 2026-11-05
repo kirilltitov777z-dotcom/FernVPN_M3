@@ -1,4 +1,4 @@
-package com.fern.vpn.ui
+package com.fern.vpn.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
