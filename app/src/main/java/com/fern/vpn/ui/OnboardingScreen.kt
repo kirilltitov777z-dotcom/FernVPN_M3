@@ -90,11 +90,11 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             PlanetBadge(page = page, modifier = Modifier.align(Alignment.CenterHorizontally))
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(24.dp))
 
             AnimatedContent(
                 targetState = page,
@@ -107,12 +107,12 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(onboardingPages[current].titleRes),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = scheme.onSurface,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
                     Text(
                         text = stringResource(onboardingPages[current].textRes),
                         style = MaterialTheme.typography.bodyMedium,
@@ -205,7 +205,7 @@ private fun PlanetBadge(page: Int, modifier: Modifier = Modifier) {
         label = "planetBreathe"
     )
 
-    Canvas(modifier = modifier.size(210.dp)) {
+    Canvas(modifier = modifier.size(172.dp)) {
         val center = Offset(size.width / 2f, size.height / 2f)
         val planetRadius = size.minDimension * 0.24f * breathe
 

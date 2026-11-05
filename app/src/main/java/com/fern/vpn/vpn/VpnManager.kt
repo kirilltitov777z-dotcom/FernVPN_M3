@@ -45,15 +45,19 @@ object VpnManager {
     /** Cloudflare listens on several UDP ports; carriers often block the default one. */
     private val primaryEndpoints = listOf(
         "162.159.192.1:2408",
+        "162.159.192.7:2408",
         "162.159.193.1:2408",
-        "188.114.96.1:2408"
+        "162.159.193.10:2408",
+        "188.114.96.1:2408",
+        "188.114.97.1:2408"
     )
 
     private val fallbackEndpoints = listOf(
         "162.159.192.1:500",
         "162.159.192.1:1701",
         "162.159.192.1:4500",
-        "188.114.96.1:500"
+        "188.114.96.1:500",
+        "188.114.96.1:4500"
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -141,16 +145,16 @@ object VpnManager {
                     for ((index, candidate) in endpoints.withIndex()) {
                         if (!isActive) return@launch
                         _attempt.value = index + 1
-                        log("Сервер " + candidate)
+                        log("Сервер " + sanitize(candidate))
                         val config = runCatching { WarpConfig.build(registration, candidate) }.getOrNull()
                         if (config == null) {
-                            log("Конфигурация отклонена: " + candidate)
+                            log("Конфигурация отклонена")
                             continue
                         }
                         try {
                             startTunnel(app, wireGuard, tunnelImpl, config)
                         } catch (throwable: Throwable) {
-                            log("Не поднялся " + candidate + ": " + describe(throwable))
+                            log("Не поднялся: " + describe(throwable))
                             runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
                             delay(350)
                             continue
@@ -161,7 +165,7 @@ object VpnManager {
                             break
                         }
 
-                        log("Нет трафика через " + candidate)
+                        log("Нет трафика через " + sanitize(candidate))
                         runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
                         delay(450)
                     }
@@ -171,7 +175,7 @@ object VpnManager {
                             "Сервер не отвечает. Возможно, сеть блокирует соединение — попробуйте Wi-Fi или загрузите файл .conf."
                         )
                     }
-                    _endpoint.value = working
+                    _endpoint.value = sanitize(working)
                     SettingsRepository.setLastEndpoint(working)
                 }
 
@@ -317,9 +321,33 @@ object VpnManager {
         val list = mutableListOf<String>()
         SettingsRepository.lastEndpoint()?.let { list.add(it) }
         list.addAll(primaryEndpoints)
-        list.add(registration.endpoint)
+        list.addAll(resolveEndpoint(registration.endpoint))
         list.addAll(fallbackEndpoints)
-        return list.distinct().take(6)
+        return list
+            .filter { candidate -> candidate.substringBefore(':').any { it.isDigit() } }
+            .distinct()
+            .take(10)
+    }
+
+    /**
+     * The registration API may answer with a hostname. Resolving it here keeps
+     * the diagnostics free of provider names and works even when DNS is slow.
+     */
+    private fun resolveEndpoint(endpoint: String): List<String> {
+        val host = endpoint.substringBefore(':')
+        val port = endpoint.substringAfter(':', "2408").substringBefore(' ').ifBlank { "2408" }
+        if (!host.any { it.isLetter() }) return listOf(endpoint)
+        return runCatching {
+            java.net.InetAddress.getAllByName(host)
+                .filterIsInstance<java.net.Inet4Address>()
+                .map { "${it.hostAddress}:$port" }
+        }.getOrDefault(emptyList())
+    }
+
+    /** Never leak the infrastructure provider name into the visible log. */
+    private fun sanitize(endpoint: String): String {
+        val host = endpoint.substringBefore(':')
+        return if (host.any { it.isLetter() }) "сервер" else endpoint
     }
 
     private suspend fun startTunnel(

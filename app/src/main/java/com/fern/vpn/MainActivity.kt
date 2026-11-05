@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val language by SettingsRepository.language.collectAsStateWithLifecycle()
             val themeMode by SettingsRepository.themeMode.collectAsStateWithLifecycle()
+            val palette by SettingsRepository.palette.collectAsStateWithLifecycle()
             val autoConnect by SettingsRepository.autoConnect.collectAsStateWithLifecycle()
             val onboardingDone by SettingsRepository.onboardingDone.collectAsStateWithLifecycle()
 
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
             }
 
             CompositionLocalProvider(LocalContext provides localizedContext) {
-                FernTheme(darkTheme = darkTheme) {
+                FernTheme(darkTheme = darkTheme, paletteKey = palette) {
                     FernVpnApp(onToggle = ::toggleVpn)
                 }
             }

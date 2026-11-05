@@ -3,18 +3,18 @@
     <string name="app_name">FernVPN</string>
     <string name="app_tagline">Private internet</string>
 
-    <string name="onb_title_welcome">Welcome to FernVPN</string>
-    <string name="onb_text_welcome">A private internet for your phone. All traffic goes inside an encrypted tunnel — no accounts, no logs, keys never leave the device.</string>
-    <string name="onb_title_connect">Generate or import</string>
-    <string name="onb_text_connect">Tap «Generate» to create a profile automatically, or load a ready .conf file from your phone. Then press the big button and allow the VPN connection in the system dialog.</string>
-    <string name="onb_title_secure">Stay protected</string>
-    <string name="onb_text_secure">The app picks a working server by itself, so the first connection can take up to half a minute. If the network blocks the connection, try Wi-Fi or another profile.</string>
+    <string name="onb_title_welcome">Private internet in one tap</string>
+    <string name="onb_text_welcome">FernVPN wraps all phone traffic into an encrypted tunnel. No sign-up and no accounts: keys are created on the device and never leave it.</string>
+    <string name="onb_title_connect">1. Create a profile</string>
+    <string name="onb_text_connect">On the main screen tap «Generate» — the profile is created automatically. Already have a .conf file? Tap «From file» instead.</string>
+    <string name="onb_title_secure">2. Connect</string>
+    <string name="onb_text_secure">Tap the big round button and allow the VPN in the system dialog. The app finds a working server by itself, so the first connection can take up to 30 seconds. When the circle turns green, you are protected.</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_start">Get started</string>
 
     <string name="guide">How to use</string>
-    <string name="guide_hint">Show the first-launch guide again</string>
+    <string name="guide_hint">Show the onboarding guide again</string>
     <string name="open">Open</string>
 
     <string name="connect">Connect</string>
@@ -28,6 +28,10 @@
     <string name="settings">Settings</string>
     <string name="settings_title">Settings</string>
     <string name="back">Back</string>
+
+    <string name="tab_general">General</string>
+    <string name="tab_connection">Connection</string>
+    <string name="tab_appearance">Appearance</string>
 
     <string name="received">Received</string>
     <string name="sent">Sent</string>
@@ -63,6 +67,13 @@
     <string name="theme_system">System</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
+
+    <string name="palette">Color theme</string>
+    <string name="palette_hint">Pick a palette for the whole app</string>
+    <string name="palette_cosmos">Cosmos</string>
+    <string name="palette_emerald">Emerald</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_sunset">Sunset</string>
 
     <string name="check_connection">Check connection</string>
     <string name="check_connection_hint">Find out which IP address the internet sees</string>

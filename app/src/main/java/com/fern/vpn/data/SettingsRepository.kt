@@ -13,6 +13,7 @@ object SettingsRepository {
 
     private const val KEY_LANG = "language"
     private const val KEY_THEME = "theme_mode"
+    private const val KEY_PALETTE = "palette"
     private const val KEY_AUTO_CONNECT = "auto_connect"
     private const val KEY_NOTIFY = "notify_connect"
 
@@ -32,7 +33,7 @@ object SettingsRepository {
     private const val KEY_IMPORTED_NAME = "imported_name"
     private const val KEY_IMPORTED_TEXT = "imported_text"
 
-    private const val KEY_ONBOARDING = "onboarding_done"
+    private const val KEY_ONBOARDING = "onboarding_done_v2"
     private const val KEY_LAST_ENDPOINT = "last_endpoint"
 
     const val CONFIG_AUTO = "auto"
@@ -45,6 +46,9 @@ object SettingsRepository {
 
     private val _themeMode = MutableStateFlow("system")
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
+
+    private val _palette = MutableStateFlow("cosmos")
+    val palette: StateFlow<String> = _palette.asStateFlow()
 
     private val _autoConnect = MutableStateFlow(false)
     val autoConnect: StateFlow<Boolean> = _autoConnect.asStateFlow()
@@ -73,6 +77,7 @@ object SettingsRepository {
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         _language.value = prefs.getString(KEY_LANG, "system") ?: "system"
         _themeMode.value = prefs.getString(KEY_THEME, "system") ?: "system"
+        _palette.value = prefs.getString(KEY_PALETTE, "cosmos") ?: "cosmos"
         _autoConnect.value = prefs.getBoolean(KEY_AUTO_CONNECT, false)
         _notifyConnect.value = prefs.getBoolean(KEY_NOTIFY, true)
         _totalSeconds.value = prefs.getLong(KEY_TOTAL_SECONDS, 0L)
@@ -116,6 +121,11 @@ object SettingsRepository {
     fun setThemeMode(mode: String) {
         prefs.edit().putString(KEY_THEME, mode).apply()
         _themeMode.value = mode
+    }
+
+    fun setPalette(key: String) {
+        prefs.edit().putString(KEY_PALETTE, key).apply()
+        _palette.value = key
     }
 
     fun setAutoConnect(enabled: Boolean) {

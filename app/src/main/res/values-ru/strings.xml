@@ -3,18 +3,18 @@
     <string name="app_name">FernVPN</string>
     <string name="app_tagline">Приватный интернет</string>
 
-    <string name="onb_title_welcome">Добро пожаловать в FernVPN</string>
-    <string name="onb_text_welcome">Приватный интернет для телефона. Весь трафик идёт внутри шифрованного туннеля — без аккаунтов и логов, ключи не покидают устройство.</string>
-    <string name="onb_title_connect">Создать или загрузить</string>
-    <string name="onb_text_connect">Нажмите «Сгенерировать», чтобы создать профиль автоматически, или загрузите готовый файл .conf из памяти телефона. Затем нажмите большую кнопку и разрешите подключение VPN в системном окне.</string>
-    <string name="onb_title_secure">Оставайтесь под защитой</string>
-    <string name="onb_text_secure">Приложение само подбирает рабочий сервер, поэтому первое подключение может занять до полуминуты. Если сеть блокирует соединение, попробуйте Wi-Fi или другой профиль.</string>
+    <string name="onb_title_welcome">Приватный интернет в одно касание</string>
+    <string name="onb_text_welcome">FernVPN упаковывает весь трафик телефона в шифрованный туннель. Без регистрации и аккаунтов: ключи создаются на устройстве и никуда не отправляются.</string>
+    <string name="onb_title_connect">1. Создайте профиль</string>
+    <string name="onb_text_connect">На главном экране нажмите «Сгенерировать» — профиль создастся сам. Если у вас уже есть файл .conf, нажмите «Из файла».</string>
+    <string name="onb_title_secure">2. Подключитесь</string>
+    <string name="onb_text_secure">Нажмите большую круглую кнопку и разрешите VPN в системном окне. Приложение само подберёт рабочий сервер — первое подключение может занять до 30 секунд. Когда круг станет зелёным, соединение защищено.</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_next">Далее</string>
     <string name="onboarding_start">Начать</string>
 
     <string name="guide">Как пользоваться</string>
-    <string name="guide_hint">Показать инструкцию первого запуска</string>
+    <string name="guide_hint">Показать обучение ещё раз</string>
     <string name="open">Открыть</string>
 
     <string name="connect">Подключить</string>
@@ -28,6 +28,10 @@
     <string name="settings">Настройки</string>
     <string name="settings_title">Настройки</string>
     <string name="back">Назад</string>
+
+    <string name="tab_general">Основное</string>
+    <string name="tab_connection">Соединение</string>
+    <string name="tab_appearance">Оформление</string>
 
     <string name="received">Получено</string>
     <string name="sent">Отправлено</string>
@@ -63,6 +67,13 @@
     <string name="theme_system">Системное</string>
     <string name="theme_dark">Тёмное</string>
     <string name="theme_light">Светлое</string>
+
+    <string name="palette">Цветовая тема</string>
+    <string name="palette_hint">Выберите палитру для всего приложения</string>
+    <string name="palette_cosmos">Космос</string>
+    <string name="palette_emerald">Изумруд</string>
+    <string name="palette_ocean">Океан</string>
+    <string name="palette_sunset">Закат</string>
 
     <string name="check_connection">Проверка соединения</string>
     <string name="check_connection_hint">Узнать, какой IP видит интернет</string>

@@ -3,14 +3,17 @@ package com.fern.vpn.vpn
 import com.wireguard.crypto.KeyPair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import javax.net.ssl.HttpsURLConnection
+import java.util.concurrent.TimeUnit
 
 data class WarpRegistration(
     val privateKey: String,
@@ -25,8 +28,8 @@ data class WarpRegistration(
 )
 
 /**
- * One way of talking to Cloudflare's registration API. The Android client is the
- * most reliable variant: the API rejects older client versions with 401.
+ * One way of talking to the registration API. The Android client is the most
+ * reliable variant: older clients are rejected with 401.
  */
 private data class RegVariant(
     val url: String,
@@ -38,10 +41,19 @@ private data class RegVariant(
 )
 
 /**
- * Registers a WireGuard key pair with Cloudflare WARP and returns the
- * connection parameters (addresses, peer key, endpoint) it hands back.
+ * Registers a WireGuard key pair and returns the connection parameters
+ * (addresses, peer key, endpoint) handed back by the service.
  */
 object WarpApi {
+
+    private val jsonMedia = "application/json; charset=UTF-8".toMediaType()
+
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .build()
 
     private val variants = listOf(
         RegVariant(
@@ -79,47 +91,26 @@ object WarpApi {
 
         for (variant in variants) {
             try {
-                val body = JSONObject().apply {
-                    put("key", publicKey)
-                    put("install_id", "")
-                    put("fcm_token", "")
-                    put("tos", tosTimestamp())
-                    put("model", variant.model)
-                    put("locale", "en_US")
-                    if (variant.legacyLinux) {
-                        put("type", "Linux")
-                    } else {
-                        put("serial_number", "")
-                        put("os_version", variant.osVersion)
-                        put("key_type", "curve25519")
-                        put("tunnel_type", "wireguard")
-                    }
-                }
+                val request = Request.Builder()
+                    .url(variant.url)
+                    .post(buildRegistrationBody(variant, publicKey).toString().toRequestBody(jsonMedia))
+                    .header("User-Agent", variant.userAgent)
+                    .header("CF-Client-Version", variant.clientVersion)
+                    .header("Accept", "application/json")
+                    .build()
 
-                val connection = (URL(variant.url).openConnection() as HttpsURLConnection).apply {
-                    requestMethod = "POST"
-                    connectTimeout = 15_000
-                    readTimeout = 15_000
-                    doOutput = true
-                    setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                    setRequestProperty("User-Agent", variant.userAgent)
-                    setRequestProperty("CF-Client-Version", variant.clientVersion)
-                    setRequestProperty("Accept", "application/json")
-                    setRequestProperty("Connection", "close")
-                }
-
-                connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-
-                val code = connection.responseCode
-                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-                val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-
+                val (code, text) = execute(request)
                 if (code !in 200..299) {
                     problems.add("${variant.clientVersion}: HTTP $code")
                     continue
                 }
 
-                val json = JSONObject(text)
+                var json = JSONObject(text)
+                if (!json.optBoolean("warp_enabled", true)) {
+                    enableTunnel(variant, json.optString("id"), json.optString("token"))
+                        ?.let { json = it }
+                }
+
                 val config = json.getJSONObject("config")
                 val peer = config.getJSONArray("peers").getJSONObject(0)
                 val interfaceObject = config.getJSONObject("interface")
@@ -131,7 +122,7 @@ object WarpApi {
                 val endpointObject = peer.optJSONObject("endpoint")
                 val host = endpointObject?.optString("host").orEmpty().ifBlank {
                     endpointObject?.optString("v4").orEmpty()
-                }.ifBlank { "engage.cloudflareclient.com" }
+                }.ifBlank { "162.159.192.1" }
                 val port = endpointObject?.optJSONArray("ports")?.optInt(0, 2408) ?: 2408
                 val endpoint = if (host.contains(":")) host else "$host:$port"
 
@@ -153,6 +144,56 @@ object WarpApi {
 
         throw IOException("Сервер конфигурации недоступен: " + problems.joinToString("; "))
     }
+
+    private fun buildRegistrationBody(variant: RegVariant, publicKey: String): JSONObject =
+        JSONObject().apply {
+            put("key", publicKey)
+            put("install_id", "")
+            put("fcm_token", "")
+            put("tos", tosTimestamp())
+            put("model", variant.model)
+            put("locale", "en_US")
+            if (variant.legacyLinux) {
+                put("type", "Linux")
+            } else {
+                put("type", "Android")
+                put("serial_number", "")
+                put("os_version", variant.osVersion)
+                put("key_type", "curve25519")
+                put("tunnel_type", "wireguard")
+            }
+        }
+
+    /**
+     * Some registrations come back with the tunnel disabled. A PATCH turns it on
+     * and returns the full, ready-to-use configuration.
+     */
+    private fun enableTunnel(variant: RegVariant, deviceId: String, token: String): JSONObject? {
+        if (deviceId.isBlank()) return null
+        return runCatching {
+            val body = JSONObject().apply {
+                put("warp_enabled", true)
+                put("tos", tosTimestamp())
+            }
+            val request = Request.Builder()
+                .url(variant.url + "/" + deviceId)
+                .patch(body.toString().toRequestBody(jsonMedia))
+                .header("User-Agent", variant.userAgent)
+                .header("CF-Client-Version", variant.clientVersion)
+                .header("Authorization", "Bearer $token")
+                .header("Accept", "application/json")
+                .build()
+
+            val (code, text) = execute(request)
+            if (code !in 200..299) return@runCatching null
+            JSONObject(text).takeIf { it.has("config") }
+        }.getOrNull()
+    }
+
+    private fun execute(request: Request): Pair<Int, String> =
+        client.newCall(request).execute().use { response ->
+            response.code to (response.body?.string().orEmpty())
+        }
 
     private fun tosTimestamp(): String {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)

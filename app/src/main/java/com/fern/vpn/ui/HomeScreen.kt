@@ -304,23 +304,6 @@ fun HomeScreen(
                                     .fillMaxWidth()
                                     .height(104.dp)
                             )
-                        }
-
-                        GlassCard {
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Metric(
-                                    modifier = Modifier.weight(1f),
-                                    arrow = "\u2193",
-                                    label = stringResource(R.string.received),
-                                    value = formatBytes(stats.rx)
-                                )
-                                Metric(
-                                    modifier = Modifier.weight(1f),
-                                    arrow = "\u2191",
-                                    label = stringResource(R.string.sent),
-                                    value = formatBytes(stats.tx)
-                                )
-                            }
 
                             HorizontalDivider(
                                 modifier = Modifier.padding(vertical = 14.dp),
@@ -390,14 +373,17 @@ private fun ConfigCard(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = onGenerate,
                     enabled = !generating,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
                     shape = RoundedCornerShape(50),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = scheme.primary,
                         contentColor = scheme.onPrimary
@@ -407,13 +393,17 @@ private fun ConfigCard(
                         text = stringResource(
                             if (generating) R.string.generating else R.string.generate
                         ),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1
                     )
                 }
                 Button(
                     onClick = onPickFile,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp),
                     shape = RoundedCornerShape(50),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = scheme.secondaryContainer,
                         contentColor = scheme.onSecondaryContainer
@@ -421,7 +411,8 @@ private fun ConfigCard(
                 ) {
                     Text(
                         text = stringResource(R.string.from_file),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1
                     )
                 }
             }
@@ -711,31 +702,6 @@ fun SpeedChart(samples: List<Float>, modifier: Modifier = Modifier) {
             path = linePath,
             color = lineColor,
             style = Stroke(width = 3f, cap = StrokeCap.Round)
-        )
-    }
-}
-
-@Composable
-private fun Metric(modifier: Modifier, arrow: String, label: String, value: String) {
-    Column(modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = arrow,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold
         )
     }
 }

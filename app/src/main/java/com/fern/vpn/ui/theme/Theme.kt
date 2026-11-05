@@ -1,71 +1,201 @@
 package com.fern.vpn.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Fallback palette used before Android 12 and when dynamic colour is unavailable. */
-private val CosmicColors = darkColorScheme(
-    primary = Color(0xFFA9C7FF),
-    onPrimary = Color(0xFF10233F),
-    primaryContainer = Color(0xFF1E3A5F),
-    onPrimaryContainer = Color(0xFFD6E3FF),
-    secondary = Color(0xFFC9BFFF),
-    onSecondary = Color(0xFF24164D),
-    secondaryContainer = Color(0xFF332A63),
-    onSecondaryContainer = Color(0xFFE7DEFF),
-    tertiary = Color(0xFFFFC2DB),
-    onTertiary = Color(0xFF3D1130),
-    tertiaryContainer = Color(0xFF55243F),
-    onTertiaryContainer = Color(0xFFFFD8E7),
-    background = Color(0xFF05060E),
-    onBackground = Color(0xFFE4E7F5),
-    surface = Color(0xFF0A0C16),
-    onSurface = Color(0xFFE4E7F5),
-    surfaceVariant = Color(0xFF181B2B),
-    onSurfaceVariant = Color(0xFFBFC4DA),
-    outline = Color(0xFF6C7188),
-    outlineVariant = Color(0xFF262A3D),
-    error = Color(0xFFFFB4AB),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6)
-)
+/** Every visual theme the app can paint itself with. */
+object Palettes {
+    const val COSMOS = "cosmos"
+    const val EMERALD = "emerald"
+    const val OCEAN = "ocean"
+    const val SUNSET = "sunset"
 
-private val DayColors = lightColorScheme(
-    primary = Color(0xFF3B5D8F),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD5E3FF),
-    onPrimaryContainer = Color(0xFF001B3B),
-    secondary = Color(0xFF5A5480),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFE2DEFF),
-    onSecondaryContainer = Color(0xFF17123B),
-    tertiary = Color(0xFF8C4A66),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFFFD8E7),
-    onTertiaryContainer = Color(0xFF3A0922),
-    background = Color(0xFFFAF8FF),
-    onBackground = Color(0xFF1A1B21),
-    surface = Color(0xFFFAF8FF),
-    onSurface = Color(0xFF1A1B21),
-    surfaceVariant = Color(0xFFE1E1EC),
-    onSurfaceVariant = Color(0xFF45464F),
-    outline = Color(0xFF767680),
-    outlineVariant = Color(0xFFC6C6D0)
-)
+    val keys = listOf(COSMOS, EMERALD, OCEAN, SUNSET)
+}
+
+private fun onColor(color: Color): Color =
+    if (color.luminance() > 0.45f) Color(0xFF10131A) else Color(0xFFF7F8FF)
+
+private fun palette(
+    dark: Boolean,
+    primary: Color,
+    secondary: Color,
+    tertiary: Color,
+    background: Color,
+    surface: Color
+): ColorScheme {
+    val onSurface = if (dark) Color(0xFFE6E8F2) else Color(0xFF1A1B21)
+    val variant = if (dark) {
+        lerp(surface, primary, 0.13f)
+    } else {
+        lerp(surface, primary, 0.10f)
+    }
+    val onVariant = if (dark) {
+        lerp(onSurface, background, 0.32f)
+    } else {
+        lerp(onSurface, background, 0.38f)
+    }
+    val outline = lerp(onSurface, background, 0.55f)
+    val outlineVariant = if (dark) {
+        lerp(surface, onSurface, 0.16f)
+    } else {
+        lerp(surface, onSurface, 0.14f)
+    }
+
+    val primaryContainer = lerp(background, primary, if (dark) 0.30f else 0.22f)
+    val secondaryContainer = lerp(background, secondary, if (dark) 0.30f else 0.22f)
+    val tertiaryContainer = lerp(background, tertiary, if (dark) 0.30f else 0.22f)
+
+    return if (dark) {
+        darkColorScheme(
+            primary = primary,
+            onPrimary = onColor(primary),
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = lerp(primary, Color.White, 0.62f),
+            secondary = secondary,
+            onSecondary = onColor(secondary),
+            secondaryContainer = secondaryContainer,
+            onSecondaryContainer = lerp(secondary, Color.White, 0.62f),
+            tertiary = tertiary,
+            onTertiary = onColor(tertiary),
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = lerp(tertiary, Color.White, 0.62f),
+            background = background,
+            onBackground = onSurface,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = variant,
+            onSurfaceVariant = onVariant,
+            outline = outline,
+            outlineVariant = outlineVariant,
+            error = Color(0xFFFFB4AB),
+            onError = Color(0xFF690005),
+            errorContainer = Color(0xFF93000A),
+            onErrorContainer = Color(0xFFFFDAD6)
+        )
+    } else {
+        lightColorScheme(
+            primary = primary,
+            onPrimary = onColor(primary),
+            primaryContainer = primaryContainer,
+            onPrimaryContainer = lerp(primary, Color.Black, 0.55f),
+            secondary = secondary,
+            onSecondary = onColor(secondary),
+            secondaryContainer = secondaryContainer,
+            onSecondaryContainer = lerp(secondary, Color.Black, 0.55f),
+            tertiary = tertiary,
+            onTertiary = onColor(tertiary),
+            tertiaryContainer = tertiaryContainer,
+            onTertiaryContainer = lerp(tertiary, Color.Black, 0.55f),
+            background = background,
+            onBackground = onSurface,
+            surface = surface,
+            onSurface = onSurface,
+            surfaceVariant = variant,
+            onSurfaceVariant = onVariant,
+            outline = outline,
+            outlineVariant = outlineVariant,
+            error = Color(0xFFBA1A1A),
+            onError = Color.White,
+            errorContainer = Color(0xFFFFDAD6),
+            onErrorContainer = Color(0xFF410002)
+        )
+    }
+}
+
+private fun schemeFor(paletteKey: String, dark: Boolean): ColorScheme = when (paletteKey) {
+    Palettes.EMERALD -> if (dark) {
+        palette(
+            dark = true,
+            primary = Color(0xFF7BE3AE),
+            secondary = Color(0xFF9FD9C4),
+            tertiary = Color(0xFFDCE98F),
+            background = Color(0xFF03100B),
+            surface = Color(0xFF081610)
+        )
+    } else {
+        palette(
+            dark = false,
+            primary = Color(0xFF1F7A52),
+            secondary = Color(0xFF3F6F5C),
+            tertiary = Color(0xFF6B6A1C),
+            background = Color(0xFFF5FBF6),
+            surface = Color(0xFFF7FCF8)
+        )
+    }
+
+    Palettes.OCEAN -> if (dark) {
+        palette(
+            dark = true,
+            primary = Color(0xFF79C8FF),
+            secondary = Color(0xFF8FB8FF),
+            tertiary = Color(0xFFA9E7FF),
+            background = Color(0xFF02080F),
+            surface = Color(0xFF071220)
+        )
+    } else {
+        palette(
+            dark = false,
+            primary = Color(0xFF1C5E8F),
+            secondary = Color(0xFF3D5DA8),
+            tertiary = Color(0xFF196F8C),
+            background = Color(0xFFF5FAFF),
+            surface = Color(0xFFF7FBFF)
+        )
+    }
+
+    Palettes.SUNSET -> if (dark) {
+        palette(
+            dark = true,
+            primary = Color(0xFFFFB178),
+            secondary = Color(0xFFFF9AA8),
+            tertiary = Color(0xFFE0A6FF),
+            background = Color(0xFF120409),
+            surface = Color(0xFF1C0A10)
+        )
+    } else {
+        palette(
+            dark = false,
+            primary = Color(0xFF9A4A12),
+            secondary = Color(0xFF9C3B52),
+            tertiary = Color(0xFF7B3FA8),
+            background = Color(0xFFFFF8F5),
+            surface = Color(0xFFFFFAF8)
+        )
+    }
+
+    else -> if (dark) {
+        palette(
+            dark = true,
+            primary = Color(0xFFA9C7FF),
+            secondary = Color(0xFFC9BFFF),
+            tertiary = Color(0xFFFFC2DB),
+            background = Color(0xFF05060E),
+            surface = Color(0xFF0A0C16)
+        )
+    } else {
+        palette(
+            dark = false,
+            primary = Color(0xFF3B5D8F),
+            secondary = Color(0xFF5A5480),
+            tertiary = Color(0xFF8C4A66),
+            background = Color(0xFFFAF8FF),
+            surface = Color(0xFFFFFBFF)
+        )
+    }
+}
 
 private val FernShapes = Shapes(
     extraSmall = RoundedCornerShape(12.dp),
@@ -102,21 +232,11 @@ private val FernTypography = Typography(
 @Composable
 fun FernTheme(
     darkTheme: Boolean = true,
-    dynamicColor: Boolean = true,
+    paletteKey: String = Palettes.COSMOS,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> CosmicColors
-        else -> DayColors
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = schemeFor(paletteKey, darkTheme),
         typography = FernTypography,
         shapes = FernShapes,
         content = content
