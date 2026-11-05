@@ -1,5 +1,11 @@
 package com.fern.vpn.ui
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -34,6 +40,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,11 +69,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.fern.vpn.R
+import com.fern.vpn.data.SettingsRepository
 import com.fern.vpn.vpn.VpnManager
 import kotlinx.coroutines.delay
 
@@ -75,21 +85,50 @@ fun HomeScreen(
     stats: VpnManager.Stats,
     samples: List<Float>,
     error: String?,
-    petEnabled: Boolean,
-    totalSeconds: Long,
+    configKind: String?,
+    configName: String?,
+    generating: Boolean,
     endpoint: String,
     attempt: Int,
     attemptTotal: Int,
     onToggle: () -> Unit,
+    onGenerate: () -> Unit,
+    onImport: (String, String) -> Boolean,
     onOpenSettings: () -> Unit
 ) {
     val scheme = MaterialTheme.colorScheme
     val connected = status == VpnManager.Status.CONNECTED
     val connecting = status == VpnManager.Status.CONNECTING
+    val context = LocalContext.current
 
     var showHeader by remember { mutableStateOf(false) }
     var showOrb by remember { mutableStateOf(false) }
     var showLower by remember { mutableStateOf(false) }
+
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val loaded = runCatching {
+            val name = context.displayName(uri) ?: "config.conf"
+            val text = context.contentResolver.openInputStream(uri)
+                ?.bufferedReader()
+                ?.use { it.readText() }
+                ?: throw IllegalStateException("empty")
+            name to text
+        }.getOrNull()
+
+        if (loaded == null) {
+            Toast.makeText(context, R.string.import_failed, Toast.LENGTH_LONG).show()
+        } else {
+            val ok = onImport(loaded.first, loaded.second)
+            Toast.makeText(
+                context,
+                if (ok) R.string.import_ok else R.string.import_failed,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     LaunchedEffect(Unit) {
         showHeader = true
@@ -117,49 +156,47 @@ fun HomeScreen(
                     visible = showHeader,
                     enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { -it / 6 }
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                            Text(
-                                text = stringResource(R.string.app_tagline),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = scheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            shape = CircleShape,
-                            color = scheme.surface.copy(alpha = 0.55f),
-                            border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.6f))
-                        ) {
-                            IconButton(onClick = onOpenSettings) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = stringResource(R.string.settings),
-                                    tint = scheme.onSurfaceVariant
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                                Text(
+                                    text = stringResource(R.string.app_tagline),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = scheme.onSurfaceVariant
                                 )
                             }
+                            Surface(
+                                shape = CircleShape,
+                                color = scheme.surface.copy(alpha = 0.55f),
+                                border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.6f))
+                            ) {
+                                IconButton(onClick = onOpenSettings) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = stringResource(R.string.settings),
+                                        tint = scheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
+
+                        Spacer(Modifier.height(14.dp))
+
+                        ConfigCard(
+                            kind = configKind,
+                            name = configName,
+                            generating = generating,
+                            onGenerate = onGenerate,
+                            onPickFile = { filePicker.launch(arrayOf("*/*")) }
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(14.dp))
-
-                if (petEnabled) {
-                    AnimatedVisibility(
-                        visible = showHeader,
-                        enter = fadeIn(tween(600, delayMillis = 100)) +
-                            slideInVertically(tween(600, delayMillis = 100)) { it / 10 }
-                    ) {
-                        PetPlant(totalSeconds = totalSeconds, modifier = Modifier.fillMaxWidth())
-                    }
-                    Spacer(Modifier.height(6.dp))
-                }
+                Spacer(Modifier.height(16.dp))
 
                 AnimatedVisibility(
                     visible = showOrb,
@@ -198,7 +235,8 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(R.string.server) + " · " + endpoint,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = scheme.onSurfaceVariant
+                                color = scheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
                         }
 
@@ -290,7 +328,7 @@ fun HomeScreen(
                             )
 
                             StatRow(stringResource(R.string.session_time), formatDuration(stats.sessionSeconds))
-                            StatRow(stringResource(R.string.server), stringResource(R.string.warp_server))
+                            StatRow(stringResource(R.string.connection), configurationLabel(configKind, configName))
                         }
                     }
                 }
@@ -299,6 +337,117 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ConfigCard(
+    kind: String?,
+    name: String?,
+    generating: Boolean,
+    onGenerate: () -> Unit,
+    onPickFile: () -> Unit
+) {
+    val scheme = MaterialTheme.colorScheme
+    val configured = kind != null
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = scheme.surface.copy(alpha = 0.55f),
+        border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.55f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(9.dp)
+                        .background(
+                            color = if (configured) scheme.primary else scheme.outline,
+                            shape = CircleShape
+                        )
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = configurationLabel(kind, name),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = stringResource(
+                            if (configured) R.string.config_ready else R.string.config_hint
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = scheme.onSurfaceVariant
+                    )
+                }
+                if (generating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = scheme.primary
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onGenerate,
+                    enabled = !generating,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = scheme.primary,
+                        contentColor = scheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (generating) R.string.generating else R.string.generate
+                        ),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+                Button(
+                    onClick = onPickFile,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = scheme.secondaryContainer,
+                        contentColor = scheme.onSecondaryContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.from_file),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun configurationLabel(kind: String?, name: String?): String = when (kind) {
+    SettingsRepository.CONFIG_AUTO -> stringResource(R.string.config_auto)
+    SettingsRepository.CONFIG_FILE -> name ?: stringResource(R.string.config_file)
+    else -> stringResource(R.string.config_none)
+}
+
+private fun Context.displayName(uri: Uri): String? {
+    return runCatching {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index >= 0) cursor.getString(index) else null
+                } else {
+                    null
+                }
+            }
+    }.getOrNull()
 }
 
 @Composable

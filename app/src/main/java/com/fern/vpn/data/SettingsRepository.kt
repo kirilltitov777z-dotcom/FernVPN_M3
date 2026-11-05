@@ -11,8 +11,10 @@ object SettingsRepository {
 
     private const val PREFS = "fern_prefs"
 
-    private const val KEY_PET = "pet_enabled"
     private const val KEY_LANG = "language"
+    private const val KEY_THEME = "theme_mode"
+    private const val KEY_AUTO_CONNECT = "auto_connect"
+    private const val KEY_NOTIFY = "notify_connect"
 
     private const val KEY_TOTAL_RX = "total_rx"
     private const val KEY_TOTAL_TX = "total_tx"
@@ -27,16 +29,28 @@ object SettingsRepository {
     private const val KEY_DEVICE_ID = "device_id"
     private const val KEY_TOKEN = "token"
 
+    private const val KEY_IMPORTED_NAME = "imported_name"
+    private const val KEY_IMPORTED_TEXT = "imported_text"
+
     private const val KEY_ONBOARDING = "onboarding_done"
     private const val KEY_LAST_ENDPOINT = "last_endpoint"
 
-    private lateinit var prefs: SharedPreferences
+    const val CONFIG_AUTO = "auto"
+    const val CONFIG_FILE = "file"
 
-    private val _petEnabled = MutableStateFlow(true)
-    val petEnabled: StateFlow<Boolean> = _petEnabled.asStateFlow()
+    private lateinit var prefs: SharedPreferences
 
     private val _language = MutableStateFlow("system")
     val language: StateFlow<String> = _language.asStateFlow()
+
+    private val _themeMode = MutableStateFlow("system")
+    val themeMode: StateFlow<String> = _themeMode.asStateFlow()
+
+    private val _autoConnect = MutableStateFlow(false)
+    val autoConnect: StateFlow<Boolean> = _autoConnect.asStateFlow()
+
+    private val _notifyConnect = MutableStateFlow(true)
+    val notifyConnect: StateFlow<Boolean> = _notifyConnect.asStateFlow()
 
     private val _totalSeconds = MutableStateFlow(0L)
     val totalSecondsFlow: StateFlow<Long> = _totalSeconds.asStateFlow()
@@ -47,14 +61,45 @@ object SettingsRepository {
     private val _onboardingDone = MutableStateFlow(false)
     val onboardingDone: StateFlow<Boolean> = _onboardingDone.asStateFlow()
 
+    /** "auto", "file" or null when nothing is configured yet. */
+    private val _configKind = MutableStateFlow<String?>(null)
+    val configKind: StateFlow<String?> = _configKind.asStateFlow()
+
+    private val _configName = MutableStateFlow<String?>(null)
+    val configName: StateFlow<String?> = _configName.asStateFlow()
+
     fun init(context: Context) {
         if (this::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        _petEnabled.value = prefs.getBoolean(KEY_PET, true)
         _language.value = prefs.getString(KEY_LANG, "system") ?: "system"
+        _themeMode.value = prefs.getString(KEY_THEME, "system") ?: "system"
+        _autoConnect.value = prefs.getBoolean(KEY_AUTO_CONNECT, false)
+        _notifyConnect.value = prefs.getBoolean(KEY_NOTIFY, true)
         _totalSeconds.value = prefs.getLong(KEY_TOTAL_SECONDS, 0L)
         _totalBytes.value = prefs.getLong(KEY_TOTAL_RX, 0L) + prefs.getLong(KEY_TOTAL_TX, 0L)
         _onboardingDone.value = prefs.getBoolean(KEY_ONBOARDING, false)
+        refreshConfigState()
+    }
+
+    private fun refreshConfigState() {
+        if (!this::prefs.isInitialized) return
+        val imported = prefs.getString(KEY_IMPORTED_TEXT, null)
+        when {
+            imported != null -> {
+                _configKind.value = CONFIG_FILE
+                _configName.value = prefs.getString(KEY_IMPORTED_NAME, null)
+            }
+
+            registration() != null -> {
+                _configKind.value = CONFIG_AUTO
+                _configName.value = null
+            }
+
+            else -> {
+                _configKind.value = null
+                _configName.value = null
+            }
+        }
     }
 
     fun setOnboardingDone() {
@@ -63,22 +108,31 @@ object SettingsRepository {
         _onboardingDone.value = true
     }
 
+    fun setLanguage(code: String) {
+        prefs.edit().putString(KEY_LANG, code).apply()
+        _language.value = code
+    }
+
+    fun setThemeMode(mode: String) {
+        prefs.edit().putString(KEY_THEME, mode).apply()
+        _themeMode.value = mode
+    }
+
+    fun setAutoConnect(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_CONNECT, enabled).apply()
+        _autoConnect.value = enabled
+    }
+
+    fun setNotifyConnect(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFY, enabled).apply()
+        _notifyConnect.value = enabled
+    }
+
     fun lastEndpoint(): String? =
         if (this::prefs.isInitialized) prefs.getString(KEY_LAST_ENDPOINT, null) else null
 
     fun setLastEndpoint(endpoint: String) {
-        if (!this::prefs.isInitialized) return
-        prefs.edit().putString(KEY_LAST_ENDPOINT, endpoint).apply()
-    }
-
-    fun setPetEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_PET, enabled).apply()
-        _petEnabled.value = enabled
-    }
-
-    fun setLanguage(code: String) {
-        prefs.edit().putString(KEY_LANG, code).apply()
-        _language.value = code
+        if (this::prefs.isInitialized) prefs.edit().putString(KEY_LAST_ENDPOINT, endpoint).apply()
     }
 
     val totalSeconds: Long
@@ -124,7 +178,23 @@ object SettingsRepository {
         )
     }
 
-    /** Forgets the current WARP device so the next connect registers a fresh key. */
+    fun saveRegistration(registration: WarpRegistration) {
+        if (!this::prefs.isInitialized) return
+        prefs.edit()
+            .putString(KEY_WG_PRIVATE, registration.privateKey)
+            .putString(KEY_WG_PUBLIC, registration.publicKey)
+            .putString(KEY_PEER_PUBLIC, registration.peerPublicKey)
+            .putString(KEY_ADDRESS_V4, registration.addressV4)
+            .putString(KEY_ADDRESS_V6, registration.addressV6)
+            .putString(KEY_ENDPOINT, registration.endpoint)
+            .putString(KEY_DEVICE_ID, registration.deviceId)
+            .putString(KEY_TOKEN, registration.token)
+            .remove(KEY_IMPORTED_NAME)
+            .remove(KEY_IMPORTED_TEXT)
+            .apply()
+        refreshConfigState()
+    }
+
     fun clearRegistration() {
         if (!this::prefs.isInitialized) return
         prefs.edit()
@@ -137,19 +207,28 @@ object SettingsRepository {
             .remove(KEY_DEVICE_ID)
             .remove(KEY_TOKEN)
             .apply()
+        refreshConfigState()
     }
 
-    fun saveRegistration(registration: WarpRegistration) {
+    fun saveImportedConfig(name: String, text: String) {
         if (!this::prefs.isInitialized) return
         prefs.edit()
-            .putString(KEY_WG_PRIVATE, registration.privateKey)
-            .putString(KEY_WG_PUBLIC, registration.publicKey)
-            .putString(KEY_PEER_PUBLIC, registration.peerPublicKey)
-            .putString(KEY_ADDRESS_V4, registration.addressV4)
-            .putString(KEY_ADDRESS_V6, registration.addressV6)
-            .putString(KEY_ENDPOINT, registration.endpoint)
-            .putString(KEY_DEVICE_ID, registration.deviceId)
-            .putString(KEY_TOKEN, registration.token)
+            .putString(KEY_IMPORTED_NAME, name)
+            .putString(KEY_IMPORTED_TEXT, text)
             .apply()
+        refreshConfigState()
+    }
+
+    fun importedConfig(): Pair<String, String>? {
+        if (!this::prefs.isInitialized) return null
+        val text = prefs.getString(KEY_IMPORTED_TEXT, null) ?: return null
+        val name = prefs.getString(KEY_IMPORTED_NAME, "config.conf") ?: "config.conf"
+        return name to text
+    }
+
+    fun clearImportedConfig() {
+        if (!this::prefs.isInitialized) return
+        prefs.edit().remove(KEY_IMPORTED_NAME).remove(KEY_IMPORTED_TEXT).apply()
+        refreshConfigState()
     }
 }

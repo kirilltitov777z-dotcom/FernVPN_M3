@@ -9,12 +9,17 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.fern.vpn.Ads
 import com.fern.vpn.data.SettingsRepository
+import com.fern.vpn.findActivity
 import com.fern.vpn.vpn.VpnManager
 
 @Composable
@@ -34,6 +39,7 @@ fun FernVpnApp(onToggle: () -> Unit) {
         return
     }
 
+    val context = LocalContext.current
     val status by VpnManager.status.collectAsStateWithLifecycle()
     val stats by VpnManager.stats.collectAsStateWithLifecycle()
     val samples by VpnManager.samples.collectAsStateWithLifecycle()
@@ -41,8 +47,17 @@ fun FernVpnApp(onToggle: () -> Unit) {
     val endpoint by VpnManager.endpoint.collectAsStateWithLifecycle()
     val attempt by VpnManager.attempt.collectAsStateWithLifecycle()
     val attemptTotal by VpnManager.attemptTotal.collectAsStateWithLifecycle()
-    val petEnabled by SettingsRepository.petEnabled.collectAsStateWithLifecycle()
-    val storedSeconds by SettingsRepository.totalSecondsFlow.collectAsStateWithLifecycle()
+    val generating by VpnManager.generating.collectAsStateWithLifecycle()
+    val configKind by SettingsRepository.configKind.collectAsStateWithLifecycle()
+    val configName by SettingsRepository.configName.collectAsStateWithLifecycle()
+
+    var wasConnected by remember { mutableStateOf(false) }
+    LaunchedEffect(status) {
+        if (status == VpnManager.Status.CONNECTED && !wasConnected) {
+            context.findActivity()?.let { Ads.maybeShow(it) }
+        }
+        wasConnected = status == VpnManager.Status.CONNECTED
+    }
 
     BackHandler(enabled = showSettings) { showSettings = false }
 
@@ -67,12 +82,15 @@ fun FernVpnApp(onToggle: () -> Unit) {
                 stats = stats,
                 samples = samples,
                 error = error,
-                petEnabled = petEnabled,
-                totalSeconds = storedSeconds + stats.sessionSeconds,
+                configKind = configKind,
+                configName = configName,
+                generating = generating,
                 endpoint = endpoint,
                 attempt = attempt,
                 attemptTotal = attemptTotal,
                 onToggle = onToggle,
+                onGenerate = { VpnManager.generateConfig() },
+                onImport = { name, text -> VpnManager.importConfig(name, text) },
                 onOpenSettings = { showSettings = true }
             )
         }

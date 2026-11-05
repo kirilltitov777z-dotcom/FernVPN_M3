@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,18 +17,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -58,24 +56,20 @@ import com.fern.vpn.data.SettingsRepository
 import com.fern.vpn.vpn.VpnManager
 import kotlinx.coroutines.delay
 
-private data class Achievement(
-    val title: String,
-    val description: String,
-    val progress: Float
-) {
-    val unlocked: Boolean get() = progress >= 1f
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
-    val petEnabled by SettingsRepository.petEnabled.collectAsStateWithLifecycle()
     val language by SettingsRepository.language.collectAsStateWithLifecycle()
-    val totalSeconds by SettingsRepository.totalSecondsFlow.collectAsStateWithLifecycle()
-    val totalBytes by SettingsRepository.totalBytesFlow.collectAsStateWithLifecycle()
+    val themeMode by SettingsRepository.themeMode.collectAsStateWithLifecycle()
+    val autoConnect by SettingsRepository.autoConnect.collectAsStateWithLifecycle()
+    val notifyConnect by SettingsRepository.notifyConnect.collectAsStateWithLifecycle()
+    val configKind by SettingsRepository.configKind.collectAsStateWithLifecycle()
+    val configName by SettingsRepository.configName.collectAsStateWithLifecycle()
     val error by VpnManager.error.collectAsStateWithLifecycle()
     val log by VpnManager.log.collectAsStateWithLifecycle()
     val endpoint by VpnManager.endpoint.collectAsStateWithLifecycle()
+    val checking by VpnManager.checking.collectAsStateWithLifecycle()
+    val checkResult by VpnManager.checkResult.collectAsStateWithLifecycle()
 
     var appeared by remember { mutableStateOf(false) }
     var resetDone by remember { mutableStateOf(false) }
@@ -83,8 +77,6 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
         appeared = true
     }
 
-    val achievements = buildAchievements(totalSeconds, totalBytes)
-    val unlockedCount = achievements.count { it.unlocked }
     val scheme = MaterialTheme.colorScheme
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -129,24 +121,88 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         GlassCard {
+                            Text(
+                                text = stringResource(R.string.configuration),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = when (configKind) {
+                                    SettingsRepository.CONFIG_AUTO -> stringResource(R.string.config_auto)
+                                    SettingsRepository.CONFIG_FILE ->
+                                        configName ?: stringResource(R.string.config_file)
+
+                                    else -> stringResource(R.string.config_none)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            TextButton(
+                                onClick = {
+                                    VpnManager.resetKeys()
+                                    resetDone = true
+                                },
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                            ) {
+                                Text(stringResource(R.string.reset_keys))
+                            }
+                            if (resetDone) {
+                                LaunchedEffect(Unit) {
+                                    delay(2500)
+                                    resetDone = false
+                                }
+                                Text(
+                                    text = stringResource(R.string.keys_reset),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = scheme.primary
+                                )
+                            }
+                        }
+
+                        GlassCard {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = stringResource(R.string.pet_enable),
+                                        text = stringResource(R.string.auto_connect),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Spacer(Modifier.height(3.dp))
                                     Text(
-                                        text = stringResource(R.string.pet_description),
+                                        text = stringResource(R.string.auto_connect_hint),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = scheme.onSurfaceVariant
                                     )
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Switch(
-                                    checked = petEnabled,
-                                    onCheckedChange = { SettingsRepository.setPetEnabled(it) }
+                                    checked = autoConnect,
+                                    onCheckedChange = { SettingsRepository.setAutoConnect(it) }
+                                )
+                            }
+                        }
+
+                        GlassCard {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.notifications),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(Modifier.height(3.dp))
+                                    Text(
+                                        text = stringResource(R.string.notifications_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = scheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Switch(
+                                    checked = notifyConnect,
+                                    onCheckedChange = { SettingsRepository.setNotifyConnect(it) }
                                 )
                             }
                         }
@@ -176,37 +232,60 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
                         }
 
                         GlassCard {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.achievements),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(50),
-                                    color = scheme.primaryContainer,
-                                    contentColor = scheme.onPrimaryContainer
-                                ) {
-                                    Text(
-                                        text = "$unlockedCount / ${achievements.size}",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = stringResource(R.string.theme),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            ThemeRow(
+                                label = stringResource(R.string.theme_system),
+                                selected = themeMode == "system",
+                                onClick = { SettingsRepository.setThemeMode("system") }
+                            )
+                            ThemeRow(
+                                label = stringResource(R.string.theme_dark),
+                                selected = themeMode == "dark",
+                                onClick = { SettingsRepository.setThemeMode("dark") }
+                            )
+                            ThemeRow(
+                                label = stringResource(R.string.theme_light),
+                                selected = themeMode == "light",
+                                onClick = { SettingsRepository.setThemeMode("light") }
+                            )
+                        }
+
+                        GlassCard {
+                            Text(
+                                text = stringResource(R.string.check_connection),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = stringResource(R.string.achievements_hint),
+                                text = checkResult ?: stringResource(R.string.check_connection_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = scheme.onSurfaceVariant
                             )
-                            Spacer(Modifier.height(8.dp))
-                            achievements.forEach { achievement ->
-                                AchievementRow(achievement)
+                            Spacer(Modifier.height(10.dp))
+                            Button(
+                                onClick = { VpnManager.checkConnection() },
+                                enabled = !checking,
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = scheme.secondaryContainer,
+                                    contentColor = scheme.onSecondaryContainer
+                                )
+                            ) {
+                                if (checking) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                        color = scheme.onSecondaryContainer
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                }
+                                Text(stringResource(R.string.check))
                             }
                         }
 
@@ -267,6 +346,10 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
 
                             if (log.isNotEmpty()) {
                                 Spacer(Modifier.height(10.dp))
+                                HorizontalDivider(
+                                    color = scheme.outlineVariant.copy(alpha = 0.4f),
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
                                 log.takeLast(6).forEach { line ->
                                     Text(
                                         text = line,
@@ -275,27 +358,6 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
                                         color = scheme.onSurfaceVariant
                                     )
                                 }
-                            }
-
-                            Spacer(Modifier.height(6.dp))
-                            TextButton(
-                                onClick = {
-                                    VpnManager.resetKeys()
-                                    resetDone = true
-                                }
-                            ) {
-                                Text(stringResource(R.string.reset_keys))
-                            }
-                            if (resetDone) {
-                                LaunchedEffect(Unit) {
-                                    delay(2500)
-                                    resetDone = false
-                                }
-                                Text(
-                                    text = stringResource(R.string.keys_reset),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = scheme.primary
-                                )
                             }
                         }
 
@@ -337,101 +399,16 @@ private fun LanguageRow(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AchievementRow(achievement: Achievement) {
+private fun ThemeRow(label: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 7.dp),
+            .clickable(onClick = onClick)
+            .padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .background(
-                    color = if (achievement.unlocked) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant
-                    },
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (achievement.unlocked) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = achievement.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = achievement.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (!achievement.unlocked) {
-                Spacer(Modifier.height(6.dp))
-                LinearProgressIndicator(
-                    progress = { achievement.progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp),
-                    trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-            }
-        }
+        RadioButton(selected = selected, onClick = onClick)
+        Spacer(Modifier.width(8.dp))
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
     }
-}
-
-@Composable
-private fun buildAchievements(totalSeconds: Long, totalBytes: Long): List<Achievement> {
-    val minute = 60f
-    val bytes100mb = 100f * 1024f * 1024f
-
-    return listOf(
-        Achievement(
-            title = stringResource(R.string.ach_first_leaf),
-            description = stringResource(R.string.ach_first_leaf_desc),
-            progress = (totalSeconds / minute).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_sprout),
-            description = stringResource(R.string.ach_sprout_desc),
-            progress = (totalSeconds / 1800f).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_young),
-            description = stringResource(R.string.ach_young_desc),
-            progress = (totalSeconds / 7200f).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_strong),
-            description = stringResource(R.string.ach_strong_desc),
-            progress = (totalSeconds / 36000f).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_bloom),
-            description = stringResource(R.string.ach_bloom_desc),
-            progress = (totalSeconds / 86400f).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_traveler),
-            description = stringResource(R.string.ach_traveler_desc),
-            progress = (totalBytes / bytes100mb).coerceIn(0f, 1f)
-        ),
-        Achievement(
-            title = stringResource(R.string.ach_gigabyte),
-            description = stringResource(R.string.ach_gigabyte_desc),
-            progress = (totalBytes / (1024f * 1024f * 1024f)).coerceIn(0f, 1f)
-        )
-    )
 }

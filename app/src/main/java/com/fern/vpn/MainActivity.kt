@@ -8,15 +8,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fern.vpn.data.SettingsRepository
 import com.fern.vpn.ui.FernVpnApp
 import com.fern.vpn.ui.theme.FernTheme
 import com.fern.vpn.vpn.VpnManager
+import kotlinx.coroutines.delay
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -34,11 +40,31 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val language by SettingsRepository.language.collectAsStateWithLifecycle()
+            val themeMode by SettingsRepository.themeMode.collectAsStateWithLifecycle()
+            val autoConnect by SettingsRepository.autoConnect.collectAsStateWithLifecycle()
+            val onboardingDone by SettingsRepository.onboardingDone.collectAsStateWithLifecycle()
+
             val baseContext = LocalContext.current
             val localizedContext = remember(language) { baseContext.withLanguage(language) }
+            val darkTheme = when (themeMode) {
+                "dark" -> true
+                "light" -> false
+                else -> isSystemInDarkTheme()
+            }
+
+            var autoTried by rememberSaveable { mutableStateOf(false) }
+            LaunchedEffect(autoConnect, onboardingDone) {
+                if (!autoTried && autoConnect && onboardingDone &&
+                    VpnManager.status.value == VpnManager.Status.DISCONNECTED
+                ) {
+                    autoTried = true
+                    delay(700)
+                    toggleVpn()
+                }
+            }
 
             CompositionLocalProvider(LocalContext provides localizedContext) {
-                FernTheme {
+                FernTheme(darkTheme = darkTheme) {
                     FernVpnApp(onToggle = ::toggleVpn)
                 }
             }

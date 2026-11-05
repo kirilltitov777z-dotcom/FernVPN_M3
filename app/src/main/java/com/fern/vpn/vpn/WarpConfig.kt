@@ -5,7 +5,7 @@ import java.io.ByteArrayInputStream
 
 object WarpConfig {
 
-    fun build(registration: WarpRegistration, endpoint: String = registration.endpoint): Config {
+    fun text(registration: WarpRegistration, endpoint: String = registration.endpoint): String {
         val addresses = buildList {
             add(if (registration.addressV4.contains("/")) registration.addressV4 else "${registration.addressV4}/32")
             registration.addressV6?.let {
@@ -13,7 +13,7 @@ object WarpConfig {
             }
         }.joinToString(", ")
 
-        val text = buildString {
+        return buildString {
             appendLine("[Interface]")
             appendLine("PrivateKey = ${registration.privateKey}")
             appendLine("Address = $addresses")
@@ -26,7 +26,11 @@ object WarpConfig {
             appendLine("Endpoint = $endpoint")
             appendLine("PersistentKeepalive = 25")
         }
-
-        return Config.parse(ByteArrayInputStream(text.toByteArray(Charsets.UTF_8)))
     }
+
+    fun build(registration: WarpRegistration, endpoint: String = registration.endpoint): Config =
+        Config.parse(ByteArrayInputStream(text(registration, endpoint).toByteArray(Charsets.UTF_8)))
+
+    fun parse(text: String): Config =
+        Config.parse(ByteArrayInputStream(text.toByteArray(Charsets.UTF_8)))
 }

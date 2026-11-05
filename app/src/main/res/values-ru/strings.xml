@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FernVPN</string>
-    <string name="app_tagline">Приватный интернет · WARP</string>
+    <string name="app_tagline">Приватный интернет</string>
 
     <string name="onb_title_welcome">Добро пожаловать в FernVPN</string>
-    <string name="onb_text_welcome">Приватный интернет через Cloudflare WARP. Весь трафик идёт внутри шифрованного туннеля WireGuard — без аккаунтов и логов, ключи не покидают телефон.</string>
-    <string name="onb_title_connect">Одно касание</string>
-    <string name="onb_text_connect">Нажмите большую кнопку и разрешите подключение VPN в системном окне. Приложение само подберёт рабочий сервер и порт WARP, поэтому первое подключение может занять до полуминуты.</string>
-    <string name="onb_title_pet">Папоротник растёт с вами</string>
-    <string name="onb_text_pet">Пока туннель включён, рядом с кнопкой растёт маленький папоротник. Выключите VPN — рост остановится. Питомца можно скрыть в настройках.</string>
+    <string name="onb_text_welcome">Приватный интернет для телефона. Весь трафик идёт внутри шифрованного туннеля — без аккаунтов и логов, ключи не покидают устройство.</string>
+    <string name="onb_title_connect">Создать или загрузить</string>
+    <string name="onb_text_connect">Нажмите «Сгенерировать», чтобы создать профиль автоматически, или загрузите готовый файл .conf из памяти телефона. Затем нажмите большую кнопку и разрешите подключение VPN в системном окне.</string>
+    <string name="onb_title_secure">Оставайтесь под защитой</string>
+    <string name="onb_text_secure">Приложение само подбирает рабочий сервер, поэтому первое подключение может занять до полуминуты. Если сеть блокирует соединение, попробуйте Wi-Fi или другой профиль.</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_next">Далее</string>
     <string name="onboarding_start">Начать</string>
@@ -19,7 +19,7 @@
 
     <string name="connect">Подключить</string>
     <string name="disconnect">Отключить</string>
-    <string name="status_connected">Подключено · WARP</string>
+    <string name="status_connected">Подключено</string>
     <string name="status_disconnected">Не подключено</string>
     <string name="status_connecting">Подключение…</string>
     <string name="status_tuning">Подбираю сервер %1$d/%2$d</string>
@@ -29,52 +29,50 @@
     <string name="settings_title">Настройки</string>
     <string name="back">Назад</string>
 
-    <string name="statistics">Статистика</string>
     <string name="received">Получено</string>
     <string name="sent">Отправлено</string>
     <string name="session_time">Сессия</string>
     <string name="server">Сервер</string>
-    <string name="warp_server">Cloudflare WARP</string>
+    <string name="connection">Подключение</string>
 
-    <string name="pet_enable">Включить питомца</string>
-    <string name="pet_description">Росток растёт, пока VPN включён</string>
-    <string name="pet_stage_seed">Семечко</string>
-    <string name="pet_stage_sprout">Росток</string>
-    <string name="pet_stage_young">Молодой папоротник</string>
-    <string name="pet_stage_grown">Выросший папоротник</string>
-    <string name="pet_stage_bloom">Цветущий папоротник</string>
-    <string name="pet_next_stage">следующая стадия через %1$s</string>
-    <string name="pet_max_stage">максимальная стадия</string>
+    <string name="configuration">Конфигурация</string>
+    <string name="config_none">Профиль не создан</string>
+    <string name="config_auto">Созданный</string>
+    <string name="config_file">Файл</string>
+    <string name="config_ready">Готово к подключению</string>
+    <string name="config_hint">Создайте профиль или загрузите файл .conf</string>
+    <string name="generate">Сгенерировать</string>
+    <string name="generating">Создаю…</string>
+    <string name="from_file">Из файла</string>
+    <string name="import_ok">Профиль загружен</string>
+    <string name="import_failed">Не удалось прочитать файл. Нужен конфиг WireGuard .conf.</string>
+    <string name="reset_keys">Удалить ключи и профиль</string>
+    <string name="keys_reset">Удалено. Создайте новый профиль или загрузите файл.</string>
+
+    <string name="auto_connect">Подключать при запуске</string>
+    <string name="auto_connect_hint">Включать туннель сразу при открытии приложения</string>
+    <string name="notifications">Уведомление о подключении</string>
+    <string name="notifications_hint">Показывать уведомление, когда туннель включён</string>
 
     <string name="language">Язык</string>
     <string name="language_system">Системный</string>
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <string name="theme">Оформление</string>
+    <string name="theme_system">Системное</string>
+    <string name="theme_dark">Тёмное</string>
+    <string name="theme_light">Светлое</string>
+
+    <string name="check_connection">Проверка соединения</string>
+    <string name="check_connection_hint">Узнать, какой IP видит интернет</string>
+    <string name="check">Проверить</string>
+
     <string name="speed_label">Скорость</string>
     <string name="diagnostics">Диагностика</string>
     <string name="no_errors">Ошибок нет</string>
     <string name="error_label">Ошибка</string>
-    <string name="reset_keys">Сбросить ключи WARP</string>
-    <string name="keys_reset">Ключи сброшены. При следующем подключении будет создан новый.</string>
-
-    <string name="achievements">Ачивки</string>
-    <string name="achievements_hint">Открываются по мере использования VPN</string>
-    <string name="ach_first_leaf">Первый лист</string>
-    <string name="ach_first_leaf_desc">1 минута с VPN</string>
-    <string name="ach_sprout">Росток</string>
-    <string name="ach_sprout_desc">30 минут с VPN</string>
-    <string name="ach_young">Молодой папоротник</string>
-    <string name="ach_young_desc">2 часа с VPN</string>
-    <string name="ach_strong">Крепкие корни</string>
-    <string name="ach_strong_desc">10 часов с VPN</string>
-    <string name="ach_bloom">Цветение</string>
-    <string name="ach_bloom_desc">24 часа с VPN</string>
-    <string name="ach_traveler">Путешественник</string>
-    <string name="ach_traveler_desc">100 МБ через туннель</string>
-    <string name="ach_gigabyte">Гигабайт</string>
-    <string name="ach_gigabyte_desc">1 ГБ через туннель</string>
 
     <string name="about">О приложении</string>
-    <string name="about_text">FernVPN подключается через Cloudflare WARP по протоколу WireGuard. Ключи создаются на устройстве и никуда не отправляются.</string>
+    <string name="about_text">FernVPN работает по протоколу WireGuard. Ключи создаются на устройстве и никуда не отправляются.</string>
 </resources>

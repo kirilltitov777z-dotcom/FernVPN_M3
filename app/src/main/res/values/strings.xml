@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FernVPN</string>
-    <string name="app_tagline">Private internet · WARP</string>
+    <string name="app_tagline">Private internet</string>
 
     <string name="onb_title_welcome">Welcome to FernVPN</string>
-    <string name="onb_text_welcome">A private internet through Cloudflare WARP. All traffic goes inside an encrypted WireGuard tunnel — no accounts, no logs, keys never leave your phone.</string>
-    <string name="onb_title_connect">One tap</string>
-    <string name="onb_text_connect">Tap the big button and allow the VPN connection in the system dialog. The app will pick a working WARP server and port itself, so the first connection can take up to half a minute.</string>
-    <string name="onb_title_pet">A fern grows with you</string>
-    <string name="onb_text_pet">While the tunnel is on, a small fern next to the button grows. Turn the VPN off and it pauses. You can hide it in settings at any time.</string>
+    <string name="onb_text_welcome">A private internet for your phone. All traffic goes inside an encrypted tunnel — no accounts, no logs, keys never leave the device.</string>
+    <string name="onb_title_connect">Generate or import</string>
+    <string name="onb_text_connect">Tap «Generate» to create a profile automatically, or load a ready .conf file from your phone. Then press the big button and allow the VPN connection in the system dialog.</string>
+    <string name="onb_title_secure">Stay protected</string>
+    <string name="onb_text_secure">The app picks a working server by itself, so the first connection can take up to half a minute. If the network blocks the connection, try Wi-Fi or another profile.</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_start">Get started</string>
@@ -19,7 +19,7 @@
 
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
-    <string name="status_connected">Connected · WARP</string>
+    <string name="status_connected">Connected</string>
     <string name="status_disconnected">Not connected</string>
     <string name="status_connecting">Connecting…</string>
     <string name="status_tuning">Finding a server %1$d/%2$d</string>
@@ -29,52 +29,50 @@
     <string name="settings_title">Settings</string>
     <string name="back">Back</string>
 
-    <string name="statistics">Statistics</string>
     <string name="received">Received</string>
     <string name="sent">Sent</string>
     <string name="session_time">Session</string>
     <string name="server">Server</string>
-    <string name="warp_server">Cloudflare WARP</string>
+    <string name="connection">Connection</string>
 
-    <string name="pet_enable">Enable companion</string>
-    <string name="pet_description">A small fern grows while the VPN is on</string>
-    <string name="pet_stage_seed">Seed</string>
-    <string name="pet_stage_sprout">Sprout</string>
-    <string name="pet_stage_young">Young fern</string>
-    <string name="pet_stage_grown">Grown fern</string>
-    <string name="pet_stage_bloom">Blooming fern</string>
-    <string name="pet_next_stage">next stage in %1$s</string>
-    <string name="pet_max_stage">fully grown</string>
+    <string name="configuration">Configuration</string>
+    <string name="config_none">No profile yet</string>
+    <string name="config_auto">Generated</string>
+    <string name="config_file">File</string>
+    <string name="config_ready">Ready to connect</string>
+    <string name="config_hint">Generate a profile or load a .conf file</string>
+    <string name="generate">Generate</string>
+    <string name="generating">Working…</string>
+    <string name="from_file">From file</string>
+    <string name="import_ok">Profile loaded</string>
+    <string name="import_failed">Could not read the file. A WireGuard .conf is required.</string>
+    <string name="reset_keys">Delete keys and profile</string>
+    <string name="keys_reset">Deleted. Generate a new profile or load a file.</string>
+
+    <string name="auto_connect">Connect on launch</string>
+    <string name="auto_connect_hint">Turn the tunnel on as soon as the app opens</string>
+    <string name="notifications">Connection notification</string>
+    <string name="notifications_hint">Show a notice when the tunnel is up</string>
 
     <string name="language">Language</string>
     <string name="language_system">System</string>
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <string name="theme">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+
+    <string name="check_connection">Check connection</string>
+    <string name="check_connection_hint">Find out which IP address the internet sees</string>
+    <string name="check">Check</string>
+
     <string name="speed_label">Speed</string>
     <string name="diagnostics">Diagnostics</string>
     <string name="no_errors">No errors</string>
     <string name="error_label">Error</string>
-    <string name="reset_keys">Reset WARP keys</string>
-    <string name="keys_reset">Keys reset. Next connection creates a new one.</string>
-
-    <string name="achievements">Achievements</string>
-    <string name="achievements_hint">They unlock as you use the VPN</string>
-    <string name="ach_first_leaf">First leaf</string>
-    <string name="ach_first_leaf_desc">1 minute of VPN</string>
-    <string name="ach_sprout">Sprout</string>
-    <string name="ach_sprout_desc">30 minutes of VPN</string>
-    <string name="ach_young">Young fern</string>
-    <string name="ach_young_desc">2 hours of VPN</string>
-    <string name="ach_strong">Strong roots</string>
-    <string name="ach_strong_desc">10 hours of VPN</string>
-    <string name="ach_bloom">Bloom</string>
-    <string name="ach_bloom_desc">24 hours of VPN</string>
-    <string name="ach_traveler">Traveler</string>
-    <string name="ach_traveler_desc">100 MB through the tunnel</string>
-    <string name="ach_gigabyte">Gigabyte</string>
-    <string name="ach_gigabyte_desc">1 GB through the tunnel</string>
 
     <string name="about">About</string>
-    <string name="about_text">FernVPN connects through Cloudflare WARP using the WireGuard protocol. Keys are generated on the device and never leave it.</string>
+    <string name="about_text">FernVPN uses the WireGuard protocol. Keys are generated on the device and never leave it.</string>
 </resources>

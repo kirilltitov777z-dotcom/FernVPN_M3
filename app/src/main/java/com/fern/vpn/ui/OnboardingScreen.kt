@@ -61,7 +61,7 @@ private data class OnboardingPage(
 private val onboardingPages = listOf(
     OnboardingPage(R.string.onb_title_welcome, R.string.onb_text_welcome),
     OnboardingPage(R.string.onb_title_connect, R.string.onb_text_connect),
-    OnboardingPage(R.string.onb_title_pet, R.string.onb_text_pet)
+    OnboardingPage(R.string.onb_title_secure, R.string.onb_text_secure)
 )
 
 @Composable

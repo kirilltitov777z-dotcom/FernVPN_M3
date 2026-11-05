@@ -1,8 +1,12 @@
 package com.fern.vpn.vpn
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.SystemClock
+import androidx.core.app.NotificationCompat
 import com.fern.vpn.data.SettingsRepository
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
@@ -35,12 +39,10 @@ object VpnManager {
     )
 
     private const val SAMPLE_COUNT = 48
+    private const val PROBE_URL = "https://1.1.1.1/cdn-cgi/trace"
+    private const val CHANNEL_ID = "fern_connection"
 
-    /**
-     * Cloudflare listens for WARP/WireGuard on several UDP ports. Mobile carriers
-     * frequently block 2408, and DNS may hand back an unreachable IPv6 address,
-     * so IPv4 literals are tried explicitly.
-     */
+    /** Cloudflare listens on several UDP ports; carriers often block the default one. */
     private val primaryEndpoints = listOf(
         "162.159.192.1:2408",
         "162.159.193.1:2408",
@@ -53,8 +55,6 @@ object VpnManager {
         "162.159.192.1:4500",
         "188.114.96.1:500"
     )
-
-    private const val PROBE_URL = "https://1.1.1.1/cdn-cgi/trace"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -82,6 +82,15 @@ object VpnManager {
     private val _attemptTotal = MutableStateFlow(0)
     val attemptTotal: StateFlow<Int> = _attemptTotal.asStateFlow()
 
+    private val _generating = MutableStateFlow(false)
+    val generating: StateFlow<Boolean> = _generating.asStateFlow()
+
+    private val _checking = MutableStateFlow(false)
+    val checking: StateFlow<Boolean> = _checking.asStateFlow()
+
+    private val _checkResult = MutableStateFlow<String?>(null)
+    val checkResult: StateFlow<String?> = _checkResult.asStateFlow()
+
     private var backend: GoBackend? = null
     private var tunnel: WarpTunnel? = null
     private var statsJob: Job? = null
@@ -106,77 +115,151 @@ object VpnManager {
         log("Старт подключения")
         connectJob = scope.launch {
             try {
-                val registration = SettingsRepository.registration()
-                    ?: WarpApi.register().also {
-                        SettingsRepository.saveRegistration(it)
-                        log("WARP: новый ключ зарегистрирован (warp=" + it.warpEnabled + ")")
-                    }
-                log("Адрес " + registration.addressV4 + " · ключ WARP " + if (registration.warpEnabled) "активен" else "без WARP")
-
+                val imported = SettingsRepository.importedConfig()
+                val tunnelImpl = tunnel ?: WarpTunnel().also { tunnel = it }
                 val wireGuard = backend ?: GoBackend(app).also { backend = it }
-                val warpTunnel = tunnel ?: WarpTunnel().also { tunnel = it }
 
-                val endpoints = candidateEndpoints(registration)
-                _attemptTotal.value = endpoints.size
-                log("Кандидатов: " + endpoints.size)
-
-                var working: String? = null
-                for ((index, candidate) in endpoints.withIndex()) {
-                    if (!isActive) return@launch
-                    _attempt.value = index + 1
-                    log("Сервер " + candidate)
-                    val config = runCatching { WarpConfig.build(registration, candidate) }.getOrNull()
-                    if (config == null) {
-                        log("Конфиг отклонён: " + candidate)
-                        continue
+                if (imported != null) {
+                    log("Профиль из файла: " + imported.first)
+                    val config = WarpConfig.parse(imported.second)
+                    startTunnel(app, wireGuard, tunnelImpl, config)
+                    if (!probeTunnel()) {
+                        throw IOException("Сервер из файла не ответил. Проверьте конфигурацию.")
                     }
-                    try {
-                        startTunnel(app, wireGuard, warpTunnel, config)
-                    } catch (throwable: Throwable) {
-                        log("Не поднялся " + candidate + ": " + describe(throwable))
-                        runCatching { wireGuard.setState(warpTunnel, Tunnel.State.DOWN, null) }
-                        delay(350)
-                        continue
+                    _attemptTotal.value = 1
+                    _attempt.value = 1
+                    _endpoint.value = imported.first
+                } else {
+                    val registration = SettingsRepository.registration()
+                        ?: throw IOException("Сначала создайте конфигурацию или загрузите файл .conf")
+
+                    val endpoints = candidateEndpoints(registration)
+                    _attemptTotal.value = endpoints.size
+                    log("Вариантов подключения: " + endpoints.size)
+
+                    var working: String? = null
+                    for ((index, candidate) in endpoints.withIndex()) {
+                        if (!isActive) return@launch
+                        _attempt.value = index + 1
+                        log("Сервер " + candidate)
+                        val config = runCatching { WarpConfig.build(registration, candidate) }.getOrNull()
+                        if (config == null) {
+                            log("Конфигурация отклонена: " + candidate)
+                            continue
+                        }
+                        try {
+                            startTunnel(app, wireGuard, tunnelImpl, config)
+                        } catch (throwable: Throwable) {
+                            log("Не поднялся " + candidate + ": " + describe(throwable))
+                            runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
+                            delay(350)
+                            continue
+                        }
+
+                        if (probeTunnel()) {
+                            working = candidate
+                            break
+                        }
+
+                        log("Нет трафика через " + candidate)
+                        runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
+                        delay(450)
                     }
 
-                    if (probeTunnel()) {
-                        working = candidate
-                        break
+                    if (working == null) {
+                        throw IOException(
+                            "Сервер не отвечает. Возможно, сеть блокирует соединение — попробуйте Wi-Fi или загрузите файл .conf."
+                        )
                     }
-
-                    log("Нет трафика через " + candidate)
-                    runCatching { wireGuard.setState(warpTunnel, Tunnel.State.DOWN, null) }
-                    delay(450)
+                    _endpoint.value = working
+                    SettingsRepository.setLastEndpoint(working)
                 }
 
-                if (working == null) {
-                    throw IOException(
-                        "WARP не отвечает ни на одном сервере. Провайдер может блокировать UDP — попробуйте другую сеть или Wi-Fi."
-                    )
-                }
-
-                _endpoint.value = working
-                SettingsRepository.setLastEndpoint(working)
                 _attempt.value = 0
                 _samples.value = List(SAMPLE_COUNT) { 0f }
                 _stats.value = Stats()
+                _checkResult.value = null
                 sessionStartElapsed = SystemClock.elapsedRealtime()
                 sessionSaved = false
                 _status.value = Status.CONNECTED
-                log("Туннель поднят: " + working)
-                startStatsLoop(wireGuard, warpTunnel)
+                log("Туннель поднят")
+                startStatsLoop(wireGuard, tunnelImpl)
+                notifyConnected(app)
             } catch (throwable: Throwable) {
-                val message = describe(throwable)
-                _error.value = message
+                val detail = describe(throwable)
                 _status.value = Status.ERROR
                 _attempt.value = 0
-                log("Ошибка: " + message)
+                _error.value = friendlyMessage(throwable)
+                log("Ошибка: " + detail)
                 runCatching {
                     val currentTunnel = tunnel
                     if (currentTunnel != null) {
                         backend?.setState(currentTunnel, Tunnel.State.DOWN, null)
                     }
                 }
+            }
+        }
+    }
+
+    fun generateConfig() {
+        if (_generating.value) return
+        scope.launch {
+            _generating.value = true
+            _error.value = null
+            log("Создание конфигурации")
+            try {
+                val registration = WarpApi.register()
+                SettingsRepository.saveRegistration(registration)
+                SettingsRepository.clearImportedConfig()
+                _error.value = null
+                if (_status.value == Status.ERROR) _status.value = Status.DISCONNECTED
+                log("Конфигурация создана")
+            } catch (throwable: Throwable) {
+                _error.value = friendlyMessage(throwable)
+                _status.value = Status.ERROR
+                log("Не удалось создать конфигурацию: " + describe(throwable))
+            } finally {
+                _generating.value = false
+            }
+        }
+    }
+
+    fun importConfig(name: String, text: String): Boolean {
+        return try {
+            WarpConfig.parse(text)
+            SettingsRepository.saveImportedConfig(name, text)
+            _error.value = null
+            if (_status.value == Status.ERROR) _status.value = Status.DISCONNECTED
+            log("Загружен профиль: " + name)
+            true
+        } catch (throwable: Throwable) {
+            _error.value = "Файл не подходит: нужен конфигурационный файл WireGuard (.conf)"
+            _status.value = Status.ERROR
+            log("Импорт не удался: " + describe(throwable))
+            false
+        }
+    }
+
+    fun checkConnection() {
+        if (_checking.value) return
+        scope.launch {
+            _checking.value = true
+            try {
+                val text = fetchTrace()
+                val ip = text.lineSequence()
+                    .firstOrNull { it.startsWith("ip=") }
+                    ?.removePrefix("ip=")
+                    ?.trim()
+                _checkResult.value = if (ip.isNullOrBlank()) {
+                    "Соединение работает"
+                } else {
+                    "Ваш IP: $ip"
+                }
+            } catch (throwable: Throwable) {
+                _checkResult.value = "Нет ответа. Проверьте соединение."
+                log("Проверка не удалась: " + describe(throwable))
+            } finally {
+                _checking.value = false
             }
         }
     }
@@ -197,6 +280,7 @@ object VpnManager {
             persistSession()
             _status.value = Status.DISCONNECTED
             _endpoint.value = ""
+            _attempt.value = 0
             _stats.value = Stats()
             _samples.value = List(SAMPLE_COUNT) { 0f }
         }
@@ -204,7 +288,7 @@ object VpnManager {
 
     fun resetKeys() {
         scope.launch {
-            log("Сброс ключей WARP")
+            log("Сброс ключей")
             statsJob?.cancel()
             connectJob?.cancel()
             val wireGuard = backend
@@ -214,12 +298,14 @@ object VpnManager {
             }
             persistSession()
             SettingsRepository.clearRegistration()
+            SettingsRepository.clearImportedConfig()
             _status.value = Status.DISCONNECTED
             _endpoint.value = ""
+            _attempt.value = 0
             _stats.value = Stats()
             _samples.value = List(SAMPLE_COUNT) { 0f }
             _error.value = null
-            log("Ключи WARP сброшены")
+            log("Ключи и профиль удалены")
         }
     }
 
@@ -269,9 +355,53 @@ object VpnManager {
         }
     }
 
+    private suspend fun fetchTrace(): String = withContext(Dispatchers.IO) {
+        val connection = (URL(PROBE_URL).openConnection() as HttpsURLConnection).apply {
+            connectTimeout = 4000
+            readTimeout = 4000
+            setRequestProperty("User-Agent", "FernVPN")
+            setRequestProperty("Connection", "close")
+        }
+        connection.inputStream.bufferedReader().use { it.readText() }
+    }
+
+    private fun friendlyMessage(throwable: Throwable): String {
+        val text = (throwable.message ?: "").lowercase()
+        return when {
+            text.contains("timeout") || text.contains("timed out") -> "Сервер не отвечает. Проверьте интернет и попробуйте ещё раз."
+            text.contains("unknownhost") || text.contains("unable to resolve") -> "Нет доступа к интернету. Проверьте подключение."
+            text.contains("сначала создайте") -> "Сначала создайте конфигурацию или загрузите файл .conf."
+            else -> "Не удалось подключиться. Откройте «Диагностику» в настройках."
+        }
+    }
+
     private fun describe(throwable: Throwable): String = buildString {
         append(throwable.javaClass.simpleName)
         throwable.message?.let { append(": ").append(it) }
+    }
+
+    private fun notifyConnected(context: Context) {
+        if (!SettingsRepository.notifyConnect.value) return
+        try {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "Подключение",
+                    NotificationManager.IMPORTANCE_LOW
+                )
+                manager.createNotificationChannel(channel)
+            }
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_lock)
+                .setContentTitle("FernVPN")
+                .setContentText("Защищённое соединение включено")
+                .setAutoCancel(true)
+                .build()
+            manager.notify(1, notification)
+        } catch (throwable: Throwable) {
+            log("Уведомление не показано: " + throwable.javaClass.simpleName)
+        }
     }
 
     private fun startStatsLoop(wireGuard: GoBackend, warpTunnel: WarpTunnel) {
@@ -309,7 +439,7 @@ object VpnManager {
     }
 
     private class WarpTunnel : Tunnel {
-        override fun getName(): String = "warp"
+        override fun getName(): String = "fern"
         override fun onStateChange(newState: Tunnel.State) = Unit
     }
 }

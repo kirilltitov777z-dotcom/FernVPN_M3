@@ -7,5 +7,6 @@ class FernApp : Application() {
     override fun onCreate() {
         super.onCreate()
         SettingsRepository.init(this)
+        Ads.initialize(this)
     }
 }

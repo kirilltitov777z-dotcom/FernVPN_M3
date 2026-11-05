@@ -67,5 +67,7 @@ dependencies {
     implementation("com.wireguard.android:tunnel:1.0.20230706")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

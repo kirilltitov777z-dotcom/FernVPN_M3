@@ -151,7 +151,7 @@ object WarpApi {
             }
         }
 
-        throw IOException("WARP недоступен: " + problems.joinToString("; "))
+        throw IOException("Сервер конфигурации недоступен: " + problems.joinToString("; "))
     }
 
     private fun tosTimestamp(): String {
