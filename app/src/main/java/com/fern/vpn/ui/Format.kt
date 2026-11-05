@@ -11,8 +11,14 @@ fun formatBytes(bytes: Long): String {
     return String.format(Locale.US, "%.2f GB", megabytes / 1024.0)
 }
 
-fun formatSpeed(bytesPerSecond: Float): String =
-    formatBytes(bytesPerSecond.toLong().coerceAtLeast(0L)) + "/s"
+fun formatSpeed(bytesPerSecond: Float): String {
+    val safe = bytesPerSecond.coerceAtLeast(0f)
+    return if (safe < 1024f) {
+        String.format(Locale.US, "%.0f B/s", safe)
+    } else {
+        String.format(Locale.US, "%.1f KB/s", safe / 1024f)
+    }
+}
 
 fun formatDuration(seconds: Long): String {
     val safe = seconds.coerceAtLeast(0L)
