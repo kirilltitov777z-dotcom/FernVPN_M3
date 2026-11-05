@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Aster VPN</string>
-    <string name="app_tagline">Soft private internet</string>
+    <string name="app_tagline">Private internet</string>
 
     <string name="onb_title_welcome">Private internet in one tap</string>
     <string name="onb_text_welcome">Aster VPN wraps all phone traffic into an encrypted tunnel. No sign-up and no accounts: keys are created on the device and never leave it.</string>
@@ -47,6 +47,9 @@
     <string name="config_hint">Generate a profile or load a .conf file</string>
     <string name="generate">Generate</string>
     <string name="generating">Working…</string>
+    <string name="generating_hint">Usually 5–20 seconds. If the network blocks the server, generation may fail — then try again or load a .conf file.</string>
+    <string name="seconds_elapsed">%1$d s</string>
+    <string name="cancel">Cancel</string>
     <string name="from_file">From file</string>
     <string name="import_ok">Profile loaded</string>
     <string name="import_failed">Could not read the file. A WireGuard .conf is required.</string>

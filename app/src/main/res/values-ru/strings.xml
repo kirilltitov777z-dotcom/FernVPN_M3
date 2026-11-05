@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Aster VPN</string>
-    <string name="app_tagline">Мягкий приватный интернет</string>
+    <string name="app_tagline">Приватный интернет</string>
 
     <string name="onb_title_welcome">Приватный интернет в одно касание</string>
     <string name="onb_text_welcome">Aster VPN упаковывает весь трафик телефона в шифрованный туннель. Без регистрации и аккаунтов: ключи создаются на устройстве и никуда не отправляются.</string>
@@ -47,6 +47,9 @@
     <string name="config_hint">Создайте профиль или загрузите файл .conf</string>
     <string name="generate">Сгенерировать</string>
     <string name="generating">Создаю…</string>
+    <string name="generating_hint">Обычно 5–20 секунд. Если сеть блокирует сервер, создание может не удаться — попробуйте ещё раз или загрузите файл .conf.</string>
+    <string name="seconds_elapsed">%1$d с</string>
+    <string name="cancel">Отмена</string>
     <string name="from_file">Из файла</string>
     <string name="import_ok">Профиль загружен</string>
     <string name="import_failed">Не удалось прочитать файл. Нужен конфиг WireGuard .conf.</string>

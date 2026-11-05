@@ -48,6 +48,7 @@ fun FernVpnApp(onToggle: () -> Unit) {
     val attempt by VpnManager.attempt.collectAsStateWithLifecycle()
     val attemptTotal by VpnManager.attemptTotal.collectAsStateWithLifecycle()
     val generating by VpnManager.generating.collectAsStateWithLifecycle()
+    val generatingSeconds by VpnManager.generatingSeconds.collectAsStateWithLifecycle()
     val configKind by SettingsRepository.configKind.collectAsStateWithLifecycle()
     val configName by SettingsRepository.configName.collectAsStateWithLifecycle()
 
@@ -85,11 +86,13 @@ fun FernVpnApp(onToggle: () -> Unit) {
                 configKind = configKind,
                 configName = configName,
                 generating = generating,
+                generatingSeconds = generatingSeconds,
                 endpoint = endpoint,
                 attempt = attempt,
                 attemptTotal = attemptTotal,
                 onToggle = onToggle,
                 onGenerate = { VpnManager.generateConfig() },
+                onCancelGenerate = { VpnManager.cancelGenerate() },
                 onImport = { name, text -> VpnManager.importConfig(name, text) },
                 onOpenSettings = { showSettings = true }
             )

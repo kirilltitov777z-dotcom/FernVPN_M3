@@ -11,10 +11,12 @@ import com.fern.vpn.data.SettingsRepository
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
@@ -90,6 +93,9 @@ object VpnManager {
     private val _generating = MutableStateFlow(false)
     val generating: StateFlow<Boolean> = _generating.asStateFlow()
 
+    private val _generatingSeconds = MutableStateFlow(0)
+    val generatingSeconds: StateFlow<Int> = _generatingSeconds.asStateFlow()
+
     private val _checking = MutableStateFlow(false)
     val checking: StateFlow<Boolean> = _checking.asStateFlow()
 
@@ -100,6 +106,7 @@ object VpnManager {
     private var tunnel: WarpTunnel? = null
     private var statsJob: Job? = null
     private var connectJob: Job? = null
+    private var generateJob: Job? = null
 
     private var sessionStartElapsed = 0L
     private var sessionSaved = true
@@ -127,7 +134,9 @@ object VpnManager {
                 if (imported != null) {
                     log("Профиль из файла: " + imported.first)
                     val config = WarpConfig.parse(imported.second)
-                    startTunnel(app, wireGuard, tunnelImpl, config)
+                    withTimeout(15_000) {
+                        startTunnel(app, wireGuard, tunnelImpl, config)
+                    }
                     if (!probeTunnel()) {
                         throw IOException("Сервер из файла не ответил. Проверьте конфигурацию.")
                     }
@@ -153,7 +162,9 @@ object VpnManager {
                             continue
                         }
                         try {
-                            startTunnel(app, wireGuard, tunnelImpl, config)
+                            withTimeout(15_000) {
+                                startTunnel(app, wireGuard, tunnelImpl, config)
+                            }
                         } catch (throwable: Throwable) {
                             log("Не поднялся: " + describe(throwable))
                             runCatching { wireGuard.setState(tunnelImpl, Tunnel.State.DOWN, null) }
@@ -208,25 +219,48 @@ object VpnManager {
 
     fun generateConfig() {
         if (_generating.value) return
-        scope.launch {
+        generateJob = scope.launch {
             _generating.value = true
+            _generatingSeconds.value = 0
             _error.value = null
             log("Создание конфигурации")
+            val ticker = launch {
+                while (isActive) {
+                    delay(1000)
+                    _generatingSeconds.value += 1
+                }
+            }
             try {
-                val registration = WarpApi.register()
+                val registration = withTimeout(45_000) { WarpApi.register() }
                 SettingsRepository.saveRegistration(registration)
                 SettingsRepository.clearImportedConfig()
                 _error.value = null
                 if (_status.value == Status.ERROR) _status.value = Status.DISCONNECTED
                 log("Конфигурация создана")
+            } catch (timeout: TimeoutCancellationException) {
+                _error.value = "Сервер не ответил за 45 секунд. Проверьте интернет и попробуйте ещё раз."
+                _status.value = Status.ERROR
+                log("Создание остановлено по таймауту")
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (throwable: Throwable) {
                 _error.value = friendlyMessage(throwable)
                 _status.value = Status.ERROR
                 log("Не удалось создать конфигурацию: " + describe(throwable))
             } finally {
+                ticker.cancel()
                 _generating.value = false
+                _generatingSeconds.value = 0
             }
         }
+    }
+
+    fun cancelGenerate() {
+        generateJob?.cancel()
+        generateJob = null
+        _generating.value = false
+        _generatingSeconds.value = 0
+        log("Создание отменено")
     }
 
     fun importConfig(name: String, text: String): Boolean {

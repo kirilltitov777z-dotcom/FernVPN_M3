@@ -90,11 +90,13 @@ fun HomeScreen(
     configKind: String?,
     configName: String?,
     generating: Boolean,
+    generatingSeconds: Int,
     endpoint: String,
     attempt: Int,
     attemptTotal: Int,
     onToggle: () -> Unit,
     onGenerate: () -> Unit,
+    onCancelGenerate: () -> Unit,
     onImport: (String, String) -> Boolean,
     onOpenSettings: () -> Unit
 ) {
@@ -204,7 +206,9 @@ fun HomeScreen(
                             kind = configKind,
                             name = configName,
                             generating = generating,
+                            generatingSeconds = generatingSeconds,
                             onGenerate = onGenerate,
+                            onCancelGenerate = onCancelGenerate,
                             onPickFile = { filePicker.launch(arrayOf("*/*")) }
                         )
                     }
@@ -349,7 +353,9 @@ private fun ConfigCard(
     kind: String?,
     name: String?,
     generating: Boolean,
+    generatingSeconds: Int,
     onGenerate: () -> Unit,
+    onCancelGenerate: () -> Unit,
     onPickFile: () -> Unit
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -367,7 +373,11 @@ private fun ConfigCard(
                     modifier = Modifier
                         .size(9.dp)
                         .background(
-                            color = if (configured) scheme.primary else scheme.outline,
+                            color = when {
+                                generating -> scheme.tertiary
+                                configured -> scheme.primary
+                                else -> scheme.outline
+                            },
                             shape = CircleShape
                         )
                 )
@@ -379,20 +389,31 @@ private fun ConfigCard(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = stringResource(
-                            if (configured) R.string.config_ready else R.string.config_hint
-                        ),
+                        text = when {
+                            generating -> stringResource(R.string.seconds_elapsed, generatingSeconds)
+                            configured -> stringResource(R.string.config_ready)
+                            else -> stringResource(R.string.config_hint)
+                        },
                         style = MaterialTheme.typography.labelSmall,
-                        color = scheme.onSurfaceVariant
+                        color = if (generating) scheme.tertiary else scheme.onSurfaceVariant
                     )
                 }
                 if (generating) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
-                        color = scheme.primary
+                        color = scheme.tertiary
                     )
                 }
+            }
+
+            if (generating) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.generating_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant
+                )
             }
 
             Spacer(Modifier.height(10.dp))
@@ -420,7 +441,7 @@ private fun ConfigCard(
                     )
                 }
                 Button(
-                    onClick = onPickFile,
+                    onClick = if (generating) onCancelGenerate else onPickFile,
                     modifier = Modifier
                         .weight(1f)
                         .height(40.dp),
@@ -432,7 +453,9 @@ private fun ConfigCard(
                     )
                 ) {
                     Text(
-                        text = stringResource(R.string.from_file),
+                        text = stringResource(
+                            if (generating) R.string.cancel else R.string.from_file
+                        ),
                         style = MaterialTheme.typography.labelMedium,
                         maxLines = 1
                     )
