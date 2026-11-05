@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FernVPN</string>
-    <string name="app_tagline">Приватный интернет</string>
+    <string name="app_name">Aster VPN</string>
+    <string name="app_tagline">Мягкий приватный интернет</string>
 
     <string name="onb_title_welcome">Приватный интернет в одно касание</string>
-    <string name="onb_text_welcome">FernVPN упаковывает весь трафик телефона в шифрованный туннель. Без регистрации и аккаунтов: ключи создаются на устройстве и никуда не отправляются.</string>
+    <string name="onb_text_welcome">Aster VPN упаковывает весь трафик телефона в шифрованный туннель. Без регистрации и аккаунтов: ключи создаются на устройстве и никуда не отправляются.</string>
     <string name="onb_title_connect">1. Создайте профиль</string>
     <string name="onb_text_connect">На главном экране нажмите «Сгенерировать» — профиль создастся сам. Если у вас уже есть файл .conf, нажмите «Из файла».</string>
     <string name="onb_title_secure">2. Подключитесь</string>
@@ -70,6 +70,7 @@
 
     <string name="palette">Цветовая тема</string>
     <string name="palette_hint">Выберите палитру для всего приложения</string>
+    <string name="palette_aurora">Аврора</string>
     <string name="palette_cosmos">Космос</string>
     <string name="palette_emerald">Изумруд</string>
     <string name="palette_ocean">Океан</string>
@@ -80,10 +81,11 @@
     <string name="check">Проверить</string>
 
     <string name="speed_label">Скорость</string>
+    <string name="ping">Пинг</string>
     <string name="diagnostics">Диагностика</string>
     <string name="no_errors">Ошибок нет</string>
     <string name="error_label">Ошибка</string>
 
     <string name="about">О приложении</string>
-    <string name="about_text">FernVPN работает по протоколу WireGuard. Ключи создаются на устройстве и никуда не отправляются.</string>
+    <string name="about_text">Aster VPN работает по протоколу WireGuard. Ключи создаются на устройстве и никуда не отправляются.</string>
 </resources>

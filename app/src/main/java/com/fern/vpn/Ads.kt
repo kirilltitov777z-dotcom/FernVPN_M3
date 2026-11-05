@@ -32,9 +32,11 @@ object Ads {
     private var lastShownAt = 0L
 
     fun initialize(context: Context) {
-        MobileAds.initialize(context) {
-            load(context)
-        }
+        runCatching {
+            MobileAds.initialize(context) {
+                runCatching { load(context) }
+            }
+        }.onFailure { Log.w("FernAds", "init failed: " + it.javaClass.simpleName) }
     }
 
     fun load(context: Context) {
@@ -70,14 +72,17 @@ object Ads {
         interstitial = null
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                load(activity)
+                runCatching { load(activity) }
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                load(activity)
+                runCatching { load(activity) }
             }
         }
-        ad.show(activity)
+        runCatching { ad.show(activity) }.onFailure {
+            Log.w("FernAds", "show failed: " + it.javaClass.simpleName)
+            runCatching { load(activity) }
+        }
     }
 }
 

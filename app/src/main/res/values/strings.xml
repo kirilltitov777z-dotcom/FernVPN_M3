@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FernVPN</string>
-    <string name="app_tagline">Private internet</string>
+    <string name="app_name">Aster VPN</string>
+    <string name="app_tagline">Soft private internet</string>
 
     <string name="onb_title_welcome">Private internet in one tap</string>
-    <string name="onb_text_welcome">FernVPN wraps all phone traffic into an encrypted tunnel. No sign-up and no accounts: keys are created on the device and never leave it.</string>
+    <string name="onb_text_welcome">Aster VPN wraps all phone traffic into an encrypted tunnel. No sign-up and no accounts: keys are created on the device and never leave it.</string>
     <string name="onb_title_connect">1. Create a profile</string>
     <string name="onb_text_connect">On the main screen tap «Generate» — the profile is created automatically. Already have a .conf file? Tap «From file» instead.</string>
     <string name="onb_title_secure">2. Connect</string>
@@ -70,6 +70,7 @@
 
     <string name="palette">Color theme</string>
     <string name="palette_hint">Pick a palette for the whole app</string>
+    <string name="palette_aurora">Aurora</string>
     <string name="palette_cosmos">Cosmos</string>
     <string name="palette_emerald">Emerald</string>
     <string name="palette_ocean">Ocean</string>
@@ -80,10 +81,11 @@
     <string name="check">Check</string>
 
     <string name="speed_label">Speed</string>
+    <string name="ping">Ping</string>
     <string name="diagnostics">Diagnostics</string>
     <string name="no_errors">No errors</string>
     <string name="error_label">Error</string>
 
     <string name="about">About</string>
-    <string name="about_text">FernVPN uses the WireGuard protocol. Keys are generated on the device and never leave it.</string>
+    <string name="about_text">Aster VPN uses the WireGuard protocol. Keys are generated on the device and never leave it.</string>
 </resources>

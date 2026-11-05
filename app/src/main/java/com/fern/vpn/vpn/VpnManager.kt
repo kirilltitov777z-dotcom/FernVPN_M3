@@ -35,7 +35,8 @@ object VpnManager {
         val tx: Long = 0L,
         val downSpeed: Float = 0f,
         val upSpeed: Float = 0f,
-        val sessionSeconds: Long = 0L
+        val sessionSeconds: Long = 0L,
+        val latencyMs: Int = 0
     )
 
     private const val SAMPLE_COUNT = 48
@@ -372,7 +373,7 @@ object VpnManager {
             val connection = (URL(PROBE_URL).openConnection() as HttpsURLConnection).apply {
                 connectTimeout = 2500
                 readTimeout = 2500
-                setRequestProperty("User-Agent", "FernVPN")
+                setRequestProperty("User-Agent", "AsterVPN")
                 setRequestProperty("Connection", "close")
             }
             val code = connection.responseCode
@@ -387,7 +388,7 @@ object VpnManager {
         val connection = (URL(PROBE_URL).openConnection() as HttpsURLConnection).apply {
             connectTimeout = 4000
             readTimeout = 4000
-            setRequestProperty("User-Agent", "FernVPN")
+            setRequestProperty("User-Agent", "AsterVPN")
             setRequestProperty("Connection", "close")
         }
         connection.inputStream.bufferedReader().use { it.readText() }
@@ -422,7 +423,7 @@ object VpnManager {
             }
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_lock_lock)
-                .setContentTitle("FernVPN")
+                .setContentTitle("Aster VPN")
                 .setContentText("Защищённое соединение включено")
                 .setAutoCancel(true)
                 .build()
@@ -438,6 +439,8 @@ object VpnManager {
             var lastRx = 0L
             var lastTx = 0L
             var lastAt = SystemClock.elapsedRealtime()
+            var latency = 0
+            var tick = 0
             while (isActive) {
                 delay(1000)
                 val statistics = runCatching { wireGuard.getStatistics(warpTunnel) }.getOrNull() ?: continue
@@ -450,11 +453,25 @@ object VpnManager {
                 lastRx = rx
                 lastTx = tx
                 lastAt = now
+                tick += 1
+                if (tick % 5 == 0) latency = measureLatency()
                 val seconds = (now - sessionStartElapsed) / 1000L
-                _stats.value = Stats(rx, tx, down, up, seconds)
+                _stats.value = Stats(rx, tx, down, up, seconds, latency)
                 _samples.value = (_samples.value.drop(1) + down).takeLast(SAMPLE_COUNT)
             }
         }
+    }
+
+    /** Round-trip time of a tiny TCP handshake, in milliseconds. Zero when unknown. */
+    private fun measureLatency(): Int {
+        val started = SystemClock.elapsedRealtime()
+        val ok = runCatching {
+            java.net.Socket().use { socket ->
+                socket.connect(java.net.InetSocketAddress("1.1.1.1", 443), 2000)
+            }
+        }.isSuccess
+        if (!ok) return 0
+        return (SystemClock.elapsedRealtime() - started).toInt().coerceIn(1, 1999)
     }
 
     private fun persistSession() {

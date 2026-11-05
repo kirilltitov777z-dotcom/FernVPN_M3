@@ -11,18 +11,18 @@
             <gradient
                 android:type="radial"
                 android:centerX="54"
-                android:centerY="42"
-                android:gradientRadius="82"
-                android:startColor="#17453A"
-                android:centerColor="#0A1720"
-                android:endColor="#04060C" />
+                android:centerY="44"
+                android:gradientRadius="88"
+                android:startColor="#1B3A38"
+                android:centerColor="#0C1A22"
+                android:endColor="#05080D" />
         </aapt:attr>
     </path>
 
     <path
-        android:pathData="M54,16 A38,38 0 1 1 53.9,16 Z"
-        android:strokeColor="#4FE0B0"
-        android:strokeAlpha="0.22"
-        android:strokeWidth="1.4"
+        android:pathData="M54,14 A40,40 0 1 1 53.9,14 Z"
+        android:strokeColor="#A8E6CF"
+        android:strokeAlpha="0.18"
+        android:strokeWidth="1.2"
         android:fillColor="#00000000" />
 </vector>

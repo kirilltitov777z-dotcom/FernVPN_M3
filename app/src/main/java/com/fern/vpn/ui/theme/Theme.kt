@@ -17,12 +17,13 @@ import androidx.compose.ui.unit.sp
 
 /** Every visual theme the app can paint itself with. */
 object Palettes {
+    const val AURORA = "aurora"
     const val COSMOS = "cosmos"
     const val EMERALD = "emerald"
     const val OCEAN = "ocean"
     const val SUNSET = "sunset"
 
-    val keys = listOf(COSMOS, EMERALD, OCEAN, SUNSET)
+    val keys = listOf(AURORA, COSMOS, EMERALD, OCEAN, SUNSET)
 }
 
 private fun onColor(color: Color): Color =
@@ -116,6 +117,26 @@ private fun palette(
 }
 
 private fun schemeFor(paletteKey: String, dark: Boolean): ColorScheme = when (paletteKey) {
+    Palettes.AURORA -> if (dark) {
+        palette(
+            dark = true,
+            primary = Color(0xFFA8E6CF),
+            secondary = Color(0xFFC9C4FF),
+            tertiary = Color(0xFFFFD3B6),
+            background = Color(0xFF070D11),
+            surface = Color(0xFF0D171E)
+        )
+    } else {
+        palette(
+            dark = false,
+            primary = Color(0xFF2F7D68),
+            secondary = Color(0xFF615C9B),
+            tertiary = Color(0xFFA15D3C),
+            background = Color(0xFFFAFBF7),
+            surface = Color(0xFFFDFDFB)
+        )
+    }
+
     Palettes.EMERALD -> if (dark) {
         palette(
             dark = true,
@@ -232,7 +253,7 @@ private val FernTypography = Typography(
 @Composable
 fun FernTheme(
     darkTheme: Boolean = true,
-    paletteKey: String = Palettes.COSMOS,
+    paletteKey: String = Palettes.AURORA,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(

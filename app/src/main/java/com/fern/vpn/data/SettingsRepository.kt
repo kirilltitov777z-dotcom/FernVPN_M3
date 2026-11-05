@@ -47,7 +47,7 @@ object SettingsRepository {
     private val _themeMode = MutableStateFlow("system")
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
-    private val _palette = MutableStateFlow("cosmos")
+    private val _palette = MutableStateFlow("aurora")
     val palette: StateFlow<String> = _palette.asStateFlow()
 
     private val _autoConnect = MutableStateFlow(false)
@@ -77,7 +77,7 @@ object SettingsRepository {
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         _language.value = prefs.getString(KEY_LANG, "system") ?: "system"
         _themeMode.value = prefs.getString(KEY_THEME, "system") ?: "system"
-        _palette.value = prefs.getString(KEY_PALETTE, "cosmos") ?: "cosmos"
+        _palette.value = prefs.getString(KEY_PALETTE, "aurora") ?: "aurora"
         _autoConnect.value = prefs.getBoolean(KEY_AUTO_CONNECT, false)
         _notifyConnect.value = prefs.getBoolean(KEY_NOTIFY, true)
         _totalSeconds.value = prefs.getLong(KEY_TOTAL_SECONDS, 0L)

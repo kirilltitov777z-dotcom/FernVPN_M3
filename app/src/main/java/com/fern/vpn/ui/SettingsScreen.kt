@@ -437,34 +437,47 @@ private fun AppearanceTab(
             color = scheme.onSurfaceVariant
         )
         Spacer(Modifier.height(12.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            PaletteChip(
-                label = stringResource(R.string.palette_cosmos),
-                colors = listOf(Color(0xFFA9C7FF), Color(0xFFC9BFFF)),
-                selected = palette == Palettes.COSMOS,
-                onClick = { SettingsRepository.setPalette(Palettes.COSMOS) }
-            )
-            PaletteChip(
-                label = stringResource(R.string.palette_emerald),
-                colors = listOf(Color(0xFF7BE3AE), Color(0xFFDCE98F)),
-                selected = palette == Palettes.EMERALD,
-                onClick = { SettingsRepository.setPalette(Palettes.EMERALD) }
-            )
-            PaletteChip(
-                label = stringResource(R.string.palette_ocean),
-                colors = listOf(Color(0xFF79C8FF), Color(0xFF8FB8FF)),
-                selected = palette == Palettes.OCEAN,
-                onClick = { SettingsRepository.setPalette(Palettes.OCEAN) }
-            )
-            PaletteChip(
-                label = stringResource(R.string.palette_sunset),
-                colors = listOf(Color(0xFFFFB178), Color(0xFFFF9AA8)),
-                selected = palette == Palettes.SUNSET,
-                onClick = { SettingsRepository.setPalette(Palettes.SUNSET) }
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                PaletteChip(
+                    label = stringResource(R.string.palette_aurora),
+                    colors = listOf(Color(0xFFA8E6CF), Color(0xFFC9C4FF)),
+                    selected = palette == Palettes.AURORA,
+                    onClick = { SettingsRepository.setPalette(Palettes.AURORA) }
+                )
+                PaletteChip(
+                    label = stringResource(R.string.palette_cosmos),
+                    colors = listOf(Color(0xFFA9C7FF), Color(0xFFC9BFFF)),
+                    selected = palette == Palettes.COSMOS,
+                    onClick = { SettingsRepository.setPalette(Palettes.COSMOS) }
+                )
+                PaletteChip(
+                    label = stringResource(R.string.palette_emerald),
+                    colors = listOf(Color(0xFF7BE3AE), Color(0xFFDCE98F)),
+                    selected = palette == Palettes.EMERALD,
+                    onClick = { SettingsRepository.setPalette(Palettes.EMERALD) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally)
+            ) {
+                PaletteChip(
+                    label = stringResource(R.string.palette_ocean),
+                    colors = listOf(Color(0xFF79C8FF), Color(0xFF8FB8FF)),
+                    selected = palette == Palettes.OCEAN,
+                    onClick = { SettingsRepository.setPalette(Palettes.OCEAN) }
+                )
+                PaletteChip(
+                    label = stringResource(R.string.palette_sunset),
+                    colors = listOf(Color(0xFFFFB178), Color(0xFFFF9AA8)),
+                    selected = palette == Palettes.SUNSET,
+                    onClick = { SettingsRepository.setPalette(Palettes.SUNSET) }
+                )
+            }
         }
     }
 

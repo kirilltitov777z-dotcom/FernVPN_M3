@@ -69,7 +69,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -158,10 +160,22 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = scheme.surface.copy(alpha = 0.60f),
+                                border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f))
+                            ) {
+                                BrandMark(
+                                    modifier = Modifier
+                                        .padding(7.dp)
+                                        .size(30.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = stringResource(R.string.app_name),
-                                    style = MaterialTheme.typography.headlineMedium
+                                    style = MaterialTheme.typography.headlineSmall
                                 )
                                 Text(
                                     text = stringResource(R.string.app_tagline),
@@ -220,7 +234,15 @@ fun HomeScreen(
 
                         Spacer(Modifier.height(10.dp))
 
-                        StatusPill(status = status, attempt = attempt, attemptTotal = attemptTotal)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            StatusPill(status = status, attempt = attempt, attemptTotal = attemptTotal)
+                            if (connected && stats.latencyMs > 0) {
+                                PingChip(latencyMs = stats.latencyMs)
+                            }
+                        }
 
                         Spacer(Modifier.height(10.dp))
 
@@ -503,6 +525,7 @@ private fun OrbitRing(color: Color) {
 @Composable
 private fun PowerCore(connected: Boolean, connecting: Boolean, onToggle: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
     val background by animateColorAsState(
         targetValue = if (connected) scheme.primary else scheme.surfaceVariant.copy(alpha = 0.85f),
         label = "powerBackground"
@@ -543,7 +566,10 @@ private fun PowerCore(connected: Boolean, connecting: Boolean, onToggle: () -> U
                     )
                 )
             )
-            .clickable(enabled = !connecting, onClick = onToggle),
+            .clickable(enabled = !connecting) {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onToggle()
+            },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -610,6 +636,38 @@ private fun StatusPill(status: VpnManager.Status, attempt: Int, attemptTotal: In
             )
             Spacer(Modifier.width(8.dp))
             Text(text = label, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+@Composable
+private fun PingChip(latencyMs: Int) {
+    val scheme = MaterialTheme.colorScheme
+    val dot = when {
+        latencyMs <= 80 -> scheme.primary
+        latencyMs <= 180 -> scheme.tertiary
+        else -> scheme.error
+    }
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = scheme.surface.copy(alpha = 0.6f),
+        border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.55f)),
+        contentColor = scheme.onSurfaceVariant
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(dot, CircleShape)
+            )
+            Spacer(Modifier.width(7.dp))
+            Text(
+                text = stringResource(R.string.ping) + " " + latencyMs + " ms",
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }
