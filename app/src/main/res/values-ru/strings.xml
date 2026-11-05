@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FernVPN</string>
+
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
+    <string name="status_connected">Подключено · WARP</string>
+    <string name="status_disconnected">Не подключено</string>
+    <string name="status_connecting">Подключение…</string>
+    <string name="status_error">Ошибка подключения</string>
+
+    <string name="settings">Настройки</string>
+    <string name="settings_title">Настройки</string>
+    <string name="back">Назад</string>
+
+    <string name="statistics">Статистика</string>
+    <string name="received">Получено</string>
+    <string name="sent">Отправлено</string>
+    <string name="session_time">Сессия</string>
+    <string name="server">Сервер</string>
+    <string name="warp_server">Cloudflare WARP</string>
+
+    <string name="pet_enable">Включить питомца</string>
+    <string name="pet_description">Росток растёт, пока VPN включён</string>
+    <string name="pet_stage_seed">Семечко</string>
+    <string name="pet_stage_sprout">Росток</string>
+    <string name="pet_stage_young">Молодой папоротник</string>
+    <string name="pet_stage_grown">Выросший папоротник</string>
+    <string name="pet_stage_bloom">Цветущий папоротник</string>
+    <string name="pet_next_stage">следующая стадия через %1$s</string>
+
+    <string name="language">Язык</string>
+    <string name="language_system">Системный</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_en">English</string>
+
+    <string name="achievements">Ачивки</string>
+    <string name="achievements_hint">Открываются по мере использования VPN</string>
+    <string name="ach_first_leaf">Первый лист</string>
+    <string name="ach_first_leaf_desc">1 минута с VPN</string>
+    <string name="ach_sprout">Росток</string>
+    <string name="ach_sprout_desc">30 минут с VPN</string>
+    <string name="ach_young">Молодой папоротник</string>
+    <string name="ach_young_desc">2 часа с VPN</string>
+    <string name="ach_strong">Крепкие корни</string>
+    <string name="ach_strong_desc">10 часов с VPN</string>
+    <string name="ach_bloom">Цветение</string>
+    <string name="ach_bloom_desc">24 часа с VPN</string>
+    <string name="ach_traveler">Путешественник</string>
+    <string name="ach_traveler_desc">100 МБ через туннель</string>
+    <string name="ach_gigabyte">Гигабайт</string>
+    <string name="ach_gigabyte_desc">1 ГБ через туннель</string>
+
+    <string name="about">О приложении</string>
+    <string name="about_text">FernVPN подключается через Cloudflare WARP по протоколу WireGuard. Ключи создаются на устройстве и никуда не отправляются.</string>
+</resources>
