@@ -34,6 +34,13 @@
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <string name="speed_label">Скорость</string>
+    <string name="diagnostics">Диагностика</string>
+    <string name="no_errors">Ошибок нет</string>
+    <string name="error_label">Ошибка</string>
+    <string name="reset_keys">Сбросить ключи WARP</string>
+    <string name="keys_reset">Ключи сброшены. При следующем подключении будет создан новый.</string>
+
     <string name="achievements">Ачивки</string>
     <string name="achievements_hint">Открываются по мере использования VPN</string>
     <string name="ach_first_leaf">Первый лист</string>

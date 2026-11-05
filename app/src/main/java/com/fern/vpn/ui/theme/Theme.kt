@@ -1,7 +1,10 @@
 package com.fern.vpn.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -10,7 +13,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import android.os.Build
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF4C6650),
@@ -58,6 +63,30 @@ private val DarkColors = darkColorScheme(
     outlineVariant = Color(0xFF43483F)
 )
 
+private val FernShapes = Shapes(
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(26.dp),
+    extraLarge = RoundedCornerShape(32.dp)
+)
+
+private val BaseTypography = Typography()
+
+private val FernTypography = Typography(
+    displaySmall = BaseTypography.displaySmall.copy(
+        fontWeight = FontWeight.Light,
+        letterSpacing = (-0.6).sp
+    ),
+    headlineSmall = BaseTypography.headlineSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-0.2).sp
+    ),
+    titleLarge = BaseTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+    titleMedium = BaseTypography.titleMedium.copy(fontWeight = FontWeight.Medium),
+    labelLarge = BaseTypography.labelLarge.copy(letterSpacing = 0.2.sp)
+)
+
 @Composable
 fun FernTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -76,7 +105,8 @@ fun FernTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography(),
+        typography = FernTypography,
+        shapes = FernShapes,
         content = content
     )
 }

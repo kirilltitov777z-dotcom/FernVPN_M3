@@ -103,6 +103,21 @@ object SettingsRepository {
         )
     }
 
+    /** Forgets the current WARP device so the next connect registers a fresh key. */
+    fun clearRegistration() {
+        if (!this::prefs.isInitialized) return
+        prefs.edit()
+            .remove(KEY_WG_PRIVATE)
+            .remove(KEY_WG_PUBLIC)
+            .remove(KEY_PEER_PUBLIC)
+            .remove(KEY_ADDRESS_V4)
+            .remove(KEY_ADDRESS_V6)
+            .remove(KEY_ENDPOINT)
+            .remove(KEY_DEVICE_ID)
+            .remove(KEY_TOKEN)
+            .apply()
+    }
+
     fun saveRegistration(registration: WarpRegistration) {
         if (!this::prefs.isInitialized) return
         prefs.edit()

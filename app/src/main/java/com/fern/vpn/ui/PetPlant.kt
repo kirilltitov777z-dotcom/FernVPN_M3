@@ -1,5 +1,11 @@
 package com.fern.vpn.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -16,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,8 +54,23 @@ fun PetPlant(totalSeconds: Long, modifier: Modifier = Modifier) {
     val soil = MaterialTheme.colorScheme.outlineVariant
     val next = stages.getOrNull(index + 1)
 
+    val sway = rememberInfiniteTransition(label = "petSway")
+    val angle by sway.animateFloat(
+        initialValue = -2.4f,
+        targetValue = 2.4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "petAngle"
+    )
+
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Canvas(modifier = Modifier.size(92.dp)) {
+        Canvas(
+            modifier = Modifier
+                .size(96.dp)
+                .graphicsLayer { rotationZ = angle }
+        ) {
             drawPlant(index, leaf, leafDark, flower, soil)
         }
         Spacer(Modifier.height(4.dp))
@@ -62,7 +85,7 @@ fun PetPlant(totalSeconds: Long, modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(R.string.pet_next_stage, formatDuration(remaining)),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
         }
     }
@@ -80,12 +103,10 @@ private fun DrawScope.drawPlant(
     val baseX = width / 2f
     val baseY = height * 0.92f
 
-    drawLine(
-        color = soil,
-        start = Offset(width * 0.2f, baseY),
-        end = Offset(width * 0.8f, baseY),
-        strokeWidth = 3f,
-        cap = StrokeCap.Round
+    drawOval(
+        color = soil.copy(alpha = 0.5f),
+        topLeft = Offset(width * 0.24f, baseY - width * 0.02f),
+        size = Size(width * 0.52f, width * 0.06f)
     )
 
     if (stageIndex == 0) {
@@ -115,9 +136,9 @@ private fun DrawScope.drawPlant(
         else -> 3
     }
 
-    for (index in 0 until pairs) {
-        val y = baseY - stemHeight * (0.32f + 0.19f * index)
-        val length = width * (0.15f + 0.028f * index)
+    for (leafIndex in 0 until pairs) {
+        val y = baseY - stemHeight * (0.32f + 0.19f * leafIndex)
+        val length = width * (0.15f + 0.028f * leafIndex)
         rotate(degrees = -22f, pivot = Offset(baseX, y)) {
             drawOval(
                 color = leaf,
@@ -138,6 +159,11 @@ private fun DrawScope.drawPlant(
         drawCircle(
             color = flower,
             radius = width * 0.075f,
+            center = Offset(baseX, baseY - stemHeight)
+        )
+        drawCircle(
+            color = flower.copy(alpha = 0.35f),
+            radius = width * 0.12f,
             center = Offset(baseX, baseY - stemHeight)
         )
     }

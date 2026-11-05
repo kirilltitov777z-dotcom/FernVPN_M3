@@ -34,6 +34,13 @@
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <string name="speed_label">Speed</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="no_errors">No errors</string>
+    <string name="error_label">Error</string>
+    <string name="reset_keys">Reset WARP keys</string>
+    <string name="keys_reset">Keys reset. Next connection creates a new one.</string>
+
     <string name="achievements">Achievements</string>
     <string name="achievements_hint">They unlock as you use the VPN</string>
     <string name="ach_first_leaf">First leaf</string>
