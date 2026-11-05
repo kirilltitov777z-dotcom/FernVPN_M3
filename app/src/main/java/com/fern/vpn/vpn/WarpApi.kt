@@ -49,10 +49,10 @@ object WarpApi {
     private val jsonMedia = "application/json; charset=UTF-8".toMediaType()
 
     private val client: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(12, TimeUnit.SECONDS)
-        .writeTimeout(12, TimeUnit.SECONDS)
-        .callTimeout(12, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
+        .callTimeout(15, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
 
@@ -62,14 +62,6 @@ object WarpApi {
             clientVersion = "a-6.38.9-5641",
             userAgent = "1.1.1.1/6.38.9-5641 (Android 16.0.0)",
             model = "Pixel 8",
-            osVersion = "16.0.0",
-            legacyLinux = false
-        ),
-        RegVariant(
-            url = "https://api.cloudflareclient.com/v0a5641/reg",
-            clientVersion = "a-6.38.9-5641",
-            userAgent = "1.1.1.1/6.38.9-5641 (Android 16.0.0)",
-            model = "PC",
             osVersion = "16.0.0",
             legacyLinux = false
         ),

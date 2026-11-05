@@ -231,22 +231,22 @@ object VpnManager {
                 }
             }
             try {
-                val registration = withTimeout(45_000) { WarpApi.register() }
+                val registration = withTimeout(60_000) { WarpApi.register() }
                 SettingsRepository.saveRegistration(registration)
                 SettingsRepository.clearImportedConfig()
                 _error.value = null
                 if (_status.value == Status.ERROR) _status.value = Status.DISCONNECTED
                 log("Конфигурация создана")
             } catch (timeout: TimeoutCancellationException) {
-                _error.value = "Сервер не ответил за 45 секунд. Проверьте интернет и попробуйте ещё раз."
+                _error.value = "Сервер не ответил за 60 секунд. Сеть может блокировать создание профиля — попробуйте Wi-Fi или загрузите файл .conf."
                 _status.value = Status.ERROR
-                log("Создание остановлено по таймауту")
+                log("Создание остановлено: сервер не ответил")
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (throwable: Throwable) {
-                _error.value = friendlyMessage(throwable)
+                _error.value = "Сервер не ответил. Сеть может блокировать создание профиля — попробуйте Wi-Fi или загрузите файл .conf."
                 _status.value = Status.ERROR
-                log("Не удалось создать конфигурацию: " + describe(throwable))
+                log("Создание не удалось: сервер не ответил")
             } finally {
                 ticker.cancel()
                 _generating.value = false

@@ -33,10 +33,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -104,7 +104,9 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                Column {
+                Column(
+                    modifier = Modifier.background(scheme.background.copy(alpha = 0.94f))
+                ) {
                     TopAppBar(
                         title = {
                             Text(
@@ -123,11 +125,10 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                     )
-                    ScrollableTabRow(
+                    TabRow(
                         selectedTabIndex = tab,
                         containerColor = Color.Transparent,
                         contentColor = scheme.primary,
-                        edgePadding = 16.dp,
                         divider = {}
                     ) {
                         tabs.forEachIndexed { index, titleRes ->
@@ -137,7 +138,8 @@ fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
                                 text = {
                                     Text(
                                         text = stringResource(titleRes),
-                                        style = MaterialTheme.typography.labelLarge
+                                        style = MaterialTheme.typography.labelLarge,
+                                        maxLines = 1
                                     )
                                 }
                             )
