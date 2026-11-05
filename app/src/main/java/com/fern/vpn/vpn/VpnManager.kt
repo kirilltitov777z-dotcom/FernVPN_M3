@@ -44,18 +44,22 @@ object VpnManager {
 
     private const val SAMPLE_COUNT = 48
     private const val PROBE_URL = "https://1.1.1.1/cdn-cgi/trace"
+    private const val PROBE_URL_PLAIN = "http://cp.cloudflare.com/generate_204"
     private const val CHANNEL_ID = "fern_connection"
 
     /** Cloudflare listens on several UDP ports; carriers often block the default one. */
     private val primaryEndpoints = listOf(
         "162.159.192.1:2408",
         "188.114.96.1:2408",
-        "162.159.193.1:2408"
+        "162.159.193.1:2408",
+        "188.114.97.1:2408",
+        "162.159.195.1:2408"
     )
 
     private val fallbackEndpoints = listOf(
         "162.159.192.1:500",
-        "162.159.192.1:4500"
+        "162.159.192.1:4500",
+        "188.114.96.1:4500"
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -131,7 +135,7 @@ object VpnManager {
                     withTimeout(15_000) {
                         startTunnel(app, wireGuard, tunnelImpl, config)
                     }
-                    if (!probeTunnel()) {
+                    if (!tunnelWorks(wireGuard, tunnelImpl)) {
                         throw IOException("Сервер из файла не ответил. Проверьте конфигурацию.")
                     }
                     _attemptTotal.value = 1
@@ -166,7 +170,7 @@ object VpnManager {
                             continue
                         }
 
-                        if (probeTunnel()) {
+                        if (tunnelWorks(wireGuard, tunnelImpl)) {
                             working = candidate
                             break
                         }
@@ -178,7 +182,7 @@ object VpnManager {
 
                     if (working == null) {
                         throw IOException(
-                            "Сервер не отвечает. Возможно, сеть блокирует соединение — попробуйте Wi-Fi или загрузите файл .conf."
+                            "Сеть блокирует VPN. Попробуйте Wi-Fi или загрузите файл .conf."
                         )
                     }
                     _endpoint.value = sanitize(working)
@@ -396,20 +400,36 @@ object VpnManager {
 
     /** Sends one real request through the tunnel; a dead handshake never answers. */
     private suspend fun probeTunnel(): Boolean = withContext(Dispatchers.IO) {
-        delay(120)
-        try {
-            val connection = (URL(PROBE_URL).openConnection() as HttpsURLConnection).apply {
-                connectTimeout = 2000
-                readTimeout = 2000
-                setRequestProperty("User-Agent", "AsterVPN")
-                setRequestProperty("Connection", "close")
-            }
-            val code = connection.responseCode
-            val text = connection.inputStream.bufferedReader().use { it.readText() }
-            code in 200..299 && text.isNotEmpty()
-        } catch (throwable: Throwable) {
-            false
+        delay(80)
+        probeOnce(PROBE_URL) || probeOnce(PROBE_URL_PLAIN)
+    }
+
+    private fun probeOnce(address: String): Boolean = try {
+        val connection = (URL(address).openConnection() as java.net.HttpURLConnection).apply {
+            connectTimeout = 1600
+            readTimeout = 1600
+            instanceFollowRedirects = true
+            setRequestProperty("User-Agent", "AsterVPN")
+            setRequestProperty("Connection", "close")
         }
+        val code = connection.responseCode
+        runCatching { connection.inputStream.close() }
+        connection.disconnect()
+        code in 200..204
+    } catch (throwable: Throwable) {
+        false
+    }
+
+    /**
+     * A tunnel counts as working when either the probe gets through or the
+     * interface actually received bytes. The byte counter saves us from a false
+     * "no traffic" verdict when the probe host itself is unreachable.
+     */
+    private suspend fun tunnelWorks(wireGuard: GoBackend, warpTunnel: WarpTunnel): Boolean {
+        val rxBefore = runCatching { wireGuard.getStatistics(warpTunnel).totalRx() }.getOrDefault(0L)
+        if (probeTunnel()) return true
+        val rxAfter = runCatching { wireGuard.getStatistics(warpTunnel).totalRx() }.getOrDefault(0L)
+        return rxAfter > rxBefore
     }
 
     private suspend fun fetchTrace(): String = withContext(Dispatchers.IO) {
@@ -425,6 +445,7 @@ object VpnManager {
     private fun friendlyMessage(throwable: Throwable): String {
         val text = (throwable.message ?: "").lowercase()
         return when {
+            text.contains("блокирует") -> "Сеть блокирует VPN. Попробуйте Wi-Fi или загрузите файл .conf."
             text.contains("timeout") || text.contains("timed out") -> "Сервер не отвечает. Проверьте интернет и попробуйте ещё раз."
             text.contains("unknownhost") || text.contains("unable to resolve") -> "Нет доступа к интернету. Проверьте подключение."
             text.contains("сначала создайте") -> "Сначала создайте конфигурацию или загрузите файл .conf."
@@ -433,8 +454,8 @@ object VpnManager {
     }
 
     private fun describe(throwable: Throwable): String = buildString {
-        append(throwable.javaClass.simpleName)
-        throwable.message?.let { append(": ").append(it) }
+        if (throwable !is IOException) append(throwable.javaClass.simpleName).append(": ")
+        append(throwable.message ?: "неизвестная ошибка")
     }
 
     private fun notifyConnected(context: Context) {
