@@ -1,7 +1,6 @@
 package com.fern.vpn.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -17,79 +16,92 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF4C6650),
-    onPrimary = Color(0xFFF8FBF5),
-    primaryContainer = Color(0xFFCFE3CF),
-    onPrimaryContainer = Color(0xFF0F2415),
-    secondary = Color(0xFF56624F),
-    onSecondary = Color(0xFFFAFCF6),
-    secondaryContainer = Color(0xFFDAE6D2),
-    onSecondaryContainer = Color(0xFF131F10),
-    tertiary = Color(0xFF6E7A5A),
-    onTertiary = Color(0xFFFFFDF2),
-    tertiaryContainer = Color(0xFFE7E8C8),
-    onTertiaryContainer = Color(0xFF1F2210),
-    background = Color(0xFFF7F9F4),
-    onBackground = Color(0xFF191D17),
-    surface = Color(0xFFF7F9F4),
-    onSurface = Color(0xFF191D17),
-    surfaceVariant = Color(0xFFDFE4DA),
-    onSurfaceVariant = Color(0xFF43483F),
-    outline = Color(0xFF73796E),
-    outlineVariant = Color(0xFFC3C9BC)
+/** Fallback palette used before Android 12 and when dynamic colour is unavailable. */
+private val CosmicColors = darkColorScheme(
+    primary = Color(0xFFA9C7FF),
+    onPrimary = Color(0xFF10233F),
+    primaryContainer = Color(0xFF1E3A5F),
+    onPrimaryContainer = Color(0xFFD6E3FF),
+    secondary = Color(0xFFC9BFFF),
+    onSecondary = Color(0xFF24164D),
+    secondaryContainer = Color(0xFF332A63),
+    onSecondaryContainer = Color(0xFFE7DEFF),
+    tertiary = Color(0xFFFFC2DB),
+    onTertiary = Color(0xFF3D1130),
+    tertiaryContainer = Color(0xFF55243F),
+    onTertiaryContainer = Color(0xFFFFD8E7),
+    background = Color(0xFF05060E),
+    onBackground = Color(0xFFE4E7F5),
+    surface = Color(0xFF0A0C16),
+    onSurface = Color(0xFFE4E7F5),
+    surfaceVariant = Color(0xFF181B2B),
+    onSurfaceVariant = Color(0xFFBFC4DA),
+    outline = Color(0xFF6C7188),
+    outlineVariant = Color(0xFF262A3D),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6)
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFB4CDB6),
-    onPrimary = Color(0xFF1F3524),
-    primaryContainer = Color(0xFF364C3A),
-    onPrimaryContainer = Color(0xFFCFE3CF),
-    secondary = Color(0xFFBECBB4),
-    onSecondary = Color(0xFF283424),
-    secondaryContainer = Color(0xFF3E4A39),
-    onSecondaryContainer = Color(0xFFDAE6D2),
-    tertiary = Color(0xFFCBCDA9),
-    onTertiary = Color(0xFF343720),
-    tertiaryContainer = Color(0xFF4B4E35),
-    onTertiaryContainer = Color(0xFFE7E8C8),
-    background = Color(0xFF10140F),
-    onBackground = Color(0xFFE1E4DB),
-    surface = Color(0xFF10140F),
-    onSurface = Color(0xFFE1E4DB),
-    surfaceVariant = Color(0xFF43483F),
-    onSurfaceVariant = Color(0xFFC3C9BC),
-    outline = Color(0xFF8D9387),
-    outlineVariant = Color(0xFF43483F)
+private val DayColors = lightColorScheme(
+    primary = Color(0xFF3B5D8F),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFD5E3FF),
+    onPrimaryContainer = Color(0xFF001B3B),
+    secondary = Color(0xFF5A5480),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFE2DEFF),
+    onSecondaryContainer = Color(0xFF17123B),
+    tertiary = Color(0xFF8C4A66),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFFFD8E7),
+    onTertiaryContainer = Color(0xFF3A0922),
+    background = Color(0xFFFAF8FF),
+    onBackground = Color(0xFF1A1B21),
+    surface = Color(0xFFFAF8FF),
+    onSurface = Color(0xFF1A1B21),
+    surfaceVariant = Color(0xFFE1E1EC),
+    onSurfaceVariant = Color(0xFF45464F),
+    outline = Color(0xFF767680),
+    outlineVariant = Color(0xFFC6C6D0)
 )
 
 private val FernShapes = Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(26.dp),
-    extraLarge = RoundedCornerShape(32.dp)
+    extraSmall = RoundedCornerShape(12.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(22.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(34.dp)
 )
 
 private val BaseTypography = Typography()
 
 private val FernTypography = Typography(
+    displayMedium = BaseTypography.displayMedium.copy(
+        fontWeight = FontWeight.Light,
+        letterSpacing = (-1.2).sp
+    ),
     displaySmall = BaseTypography.displaySmall.copy(
         fontWeight = FontWeight.Light,
-        letterSpacing = (-0.6).sp
+        letterSpacing = (-0.8).sp
+    ),
+    headlineMedium = BaseTypography.headlineMedium.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-0.4).sp
     ),
     headlineSmall = BaseTypography.headlineSmall.copy(
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = (-0.2).sp
+        letterSpacing = (-0.3).sp
     ),
     titleLarge = BaseTypography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
     titleMedium = BaseTypography.titleMedium.copy(fontWeight = FontWeight.Medium),
-    labelLarge = BaseTypography.labelLarge.copy(letterSpacing = 0.2.sp)
+    labelLarge = BaseTypography.labelLarge.copy(letterSpacing = 0.3.sp)
 )
 
 @Composable
 fun FernTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -99,8 +111,8 @@ fun FernTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColors
-        else -> LightColors
+        darkTheme -> CosmicColors
+        else -> DayColors
     }
 
     MaterialTheme(

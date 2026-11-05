@@ -20,11 +20,27 @@ import com.fern.vpn.vpn.VpnManager
 @Composable
 fun FernVpnApp(onToggle: () -> Unit) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showGuide by rememberSaveable { mutableStateOf(false) }
+
+    val onboardingDone by SettingsRepository.onboardingDone.collectAsStateWithLifecycle()
+
+    if (!onboardingDone || showGuide) {
+        OnboardingScreen(
+            onFinish = {
+                SettingsRepository.setOnboardingDone()
+                showGuide = false
+            }
+        )
+        return
+    }
 
     val status by VpnManager.status.collectAsStateWithLifecycle()
     val stats by VpnManager.stats.collectAsStateWithLifecycle()
     val samples by VpnManager.samples.collectAsStateWithLifecycle()
     val error by VpnManager.error.collectAsStateWithLifecycle()
+    val endpoint by VpnManager.endpoint.collectAsStateWithLifecycle()
+    val attempt by VpnManager.attempt.collectAsStateWithLifecycle()
+    val attemptTotal by VpnManager.attemptTotal.collectAsStateWithLifecycle()
     val petEnabled by SettingsRepository.petEnabled.collectAsStateWithLifecycle()
     val storedSeconds by SettingsRepository.totalSecondsFlow.collectAsStateWithLifecycle()
 
@@ -33,15 +49,18 @@ fun FernVpnApp(onToggle: () -> Unit) {
     AnimatedContent(
         targetState = showSettings,
         transitionSpec = {
-            (fadeIn(tween(280)) + slideInHorizontally(tween(280)) { if (targetState) it / 5 else -it / 5 })
+            (fadeIn(tween(300)) + slideInHorizontally(tween(300)) { if (targetState) it / 5 else -it / 5 })
                 .togetherWith(
-                    fadeOut(tween(180)) + slideOutHorizontally(tween(280)) { if (targetState) -it / 8 else it / 8 }
+                    fadeOut(tween(180)) + slideOutHorizontally(tween(300)) { if (targetState) -it / 8 else it / 8 }
                 )
         },
         label = "screen"
     ) { settings ->
         if (settings) {
-            SettingsScreen(onBack = { showSettings = false })
+            SettingsScreen(
+                onBack = { showSettings = false },
+                onShowGuide = { showGuide = true }
+            )
         } else {
             HomeScreen(
                 status = status,
@@ -50,6 +69,9 @@ fun FernVpnApp(onToggle: () -> Unit) {
                 error = error,
                 petEnabled = petEnabled,
                 totalSeconds = storedSeconds + stats.sessionSeconds,
+                endpoint = endpoint,
+                attempt = attempt,
+                attemptTotal = attemptTotal,
                 onToggle = onToggle,
                 onOpenSettings = { showSettings = true }
             )

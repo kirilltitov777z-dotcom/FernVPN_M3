@@ -24,8 +24,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,13 +68,14 @@ private data class Achievement(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onShowGuide: () -> Unit) {
     val petEnabled by SettingsRepository.petEnabled.collectAsStateWithLifecycle()
     val language by SettingsRepository.language.collectAsStateWithLifecycle()
     val totalSeconds by SettingsRepository.totalSecondsFlow.collectAsStateWithLifecycle()
     val totalBytes by SettingsRepository.totalBytesFlow.collectAsStateWithLifecycle()
     val error by VpnManager.error.collectAsStateWithLifecycle()
     val log by VpnManager.log.collectAsStateWithLifecycle()
+    val endpoint by VpnManager.endpoint.collectAsStateWithLifecycle()
 
     var appeared by remember { mutableStateOf(false) }
     var resetDone by remember { mutableStateOf(false) }
@@ -86,209 +87,236 @@ fun SettingsScreen(onBack: () -> Unit) {
     val unlockedCount = achievements.count { it.unlocked }
     val scheme = MaterialTheme.colorScheme
 
-    Scaffold(
-        containerColor = scheme.background,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.settings_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Spacer(Modifier.height(2.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        CosmicSky(starCount = 70)
 
-            AnimatedVisibility(
-                visible = appeared,
-                enter = fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 10 }
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    SettingsCard {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.pet_enable),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(Modifier.height(3.dp))
-                                Text(
-                                    text = stringResource(R.string.pet_description),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = scheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Switch(
-                                checked = petEnabled,
-                                onCheckedChange = { SettingsRepository.setPetEnabled(it) }
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(R.string.settings_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back)
                             )
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Spacer(Modifier.height(2.dp))
 
-                    SettingsCard {
-                        Text(
-                            text = stringResource(R.string.language),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        LanguageRow(
-                            label = stringResource(R.string.language_system),
-                            selected = language == "system",
-                            onClick = { SettingsRepository.setLanguage("system") }
-                        )
-                        LanguageRow(
-                            label = stringResource(R.string.language_ru),
-                            selected = language == "ru",
-                            onClick = { SettingsRepository.setLanguage("ru") }
-                        )
-                        LanguageRow(
-                            label = stringResource(R.string.language_en),
-                            selected = language == "en",
-                            onClick = { SettingsRepository.setLanguage("en") }
-                        )
-                    }
+                AnimatedVisibility(
+                    visible = appeared,
+                    enter = fadeIn(tween(420)) + slideInVertically(tween(420)) { it / 10 }
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        GlassCard {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.pet_enable),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(Modifier.height(3.dp))
+                                    Text(
+                                        text = stringResource(R.string.pet_description),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = scheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Switch(
+                                    checked = petEnabled,
+                                    onCheckedChange = { SettingsRepository.setPetEnabled(it) }
+                                )
+                            }
+                        }
 
-                    SettingsCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        GlassCard {
                             Text(
-                                text = stringResource(R.string.achievements),
+                                text = stringResource(R.string.language),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium
                             )
-                            Surface(
-                                shape = RoundedCornerShape(50),
-                                color = scheme.primaryContainer,
-                                contentColor = scheme.onPrimaryContainer
+                            Spacer(Modifier.height(6.dp))
+                            LanguageRow(
+                                label = stringResource(R.string.language_system),
+                                selected = language == "system",
+                                onClick = { SettingsRepository.setLanguage("system") }
+                            )
+                            LanguageRow(
+                                label = stringResource(R.string.language_ru),
+                                selected = language == "ru",
+                                onClick = { SettingsRepository.setLanguage("ru") }
+                            )
+                            LanguageRow(
+                                label = stringResource(R.string.language_en),
+                                selected = language == "en",
+                                onClick = { SettingsRepository.setLanguage("en") }
+                            )
+                        }
+
+                        GlassCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "$unlockedCount / ${achievements.size}",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    text = stringResource(R.string.achievements),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
                                 )
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = scheme.primaryContainer,
+                                    contentColor = scheme.onPrimaryContainer
+                                ) {
+                                    Text(
+                                        text = "$unlockedCount / ${achievements.size}",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
                             }
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.achievements_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = scheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        achievements.forEach { achievement ->
-                            AchievementRow(achievement)
-                        }
-                    }
-
-                    SettingsCard {
-                        Text(
-                            text = stringResource(R.string.diagnostics),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = if (error.isNullOrBlank()) {
-                                stringResource(R.string.no_errors)
-                            } else {
-                                stringResource(R.string.error_label) + ": " + error
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (error.isNullOrBlank()) scheme.onSurfaceVariant else scheme.error
-                        )
-
-                        if (log.isNotEmpty()) {
-                            Spacer(Modifier.height(10.dp))
-                            log.takeLast(6).forEach { line ->
-                                Text(
-                                    text = line,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = scheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(6.dp))
-                        TextButton(
-                            onClick = {
-                                VpnManager.resetKeys()
-                                resetDone = true
-                            }
-                        ) {
-                            Text(stringResource(R.string.reset_keys))
-                        }
-                        if (resetDone) {
-                            LaunchedEffect(Unit) {
-                                delay(2500)
-                                resetDone = false
-                            }
+                            Spacer(Modifier.height(4.dp))
                             Text(
-                                text = stringResource(R.string.keys_reset),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = scheme.primary
+                                text = stringResource(R.string.achievements_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            achievements.forEach { achievement ->
+                                AchievementRow(achievement)
+                            }
+                        }
+
+                        GlassCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.guide),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.guide_hint),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = scheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Button(
+                                    onClick = onShowGuide,
+                                    shape = RoundedCornerShape(50),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = scheme.secondaryContainer,
+                                        contentColor = scheme.onSecondaryContainer
+                                    )
+                                ) {
+                                    Text(stringResource(R.string.open))
+                                }
+                            }
+                        }
+
+                        GlassCard {
+                            Text(
+                                text = stringResource(R.string.diagnostics),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.server) + ": " +
+                                    (if (endpoint.isBlank()) "—" else endpoint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = if (error.isNullOrBlank()) {
+                                    stringResource(R.string.no_errors)
+                                } else {
+                                    stringResource(R.string.error_label) + ": " + error
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (error.isNullOrBlank()) scheme.onSurfaceVariant else scheme.error
+                            )
+
+                            if (log.isNotEmpty()) {
+                                Spacer(Modifier.height(10.dp))
+                                log.takeLast(6).forEach { line ->
+                                    Text(
+                                        text = line,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = scheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(6.dp))
+                            TextButton(
+                                onClick = {
+                                    VpnManager.resetKeys()
+                                    resetDone = true
+                                }
+                            ) {
+                                Text(stringResource(R.string.reset_keys))
+                            }
+                            if (resetDone) {
+                                LaunchedEffect(Unit) {
+                                    delay(2500)
+                                    resetDone = false
+                                }
+                                Text(
+                                    text = stringResource(R.string.keys_reset),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = scheme.primary
+                                )
+                            }
+                        }
+
+                        GlassCard {
+                            Text(
+                                text = stringResource(R.string.about),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = stringResource(R.string.about_text),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = scheme.onSurfaceVariant
                             )
                         }
                     }
-
-                    SettingsCard {
-                        Text(
-                            text = stringResource(R.string.about),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = stringResource(R.string.about_text),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = scheme.onSurfaceVariant
-                        )
-                    }
                 }
+
+                Spacer(Modifier.height(12.dp))
             }
-
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-private fun SettingsCard(content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-        )
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            content()
         }
     }
 }

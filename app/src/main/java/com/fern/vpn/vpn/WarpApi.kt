@@ -20,14 +20,21 @@ data class WarpRegistration(
     val addressV6: String?,
     val endpoint: String,
     val deviceId: String,
-    val token: String
+    val token: String,
+    val warpEnabled: Boolean = true
 )
 
+/**
+ * One way of talking to Cloudflare's registration API. The Android client is the
+ * most reliable variant: the API rejects older client versions with 401.
+ */
 private data class RegVariant(
     val url: String,
     val clientVersion: String,
-    val type: String,
-    val model: String
+    val userAgent: String,
+    val model: String,
+    val osVersion: String,
+    val legacyLinux: Boolean
 )
 
 /**
@@ -37,10 +44,30 @@ private data class RegVariant(
 object WarpApi {
 
     private val variants = listOf(
-        RegVariant("https://api.cloudflareclient.com/v0a2158/reg", "a-6.30-2158", "Linux", "PC"),
-        RegVariant("https://api.cloudflareclient.com/v0a2158/reg", "a-6.30-2158", "Android", "Pixel 7"),
-        RegVariant("https://api.cloudflareclient.com/v0a1922/reg", "a-6.10-1668", "Linux", "PC"),
-        RegVariant("https://api.cloudflareclient.com/v0i1909051800/reg", "a-6.10-1668", "Android", "Pixel 7")
+        RegVariant(
+            url = "https://api.cloudflareclient.com/v0a5641/reg",
+            clientVersion = "a-6.38.9-5641",
+            userAgent = "1.1.1.1/6.38.9-5641 (Android 16.0.0)",
+            model = "Pixel 8",
+            osVersion = "16.0.0",
+            legacyLinux = false
+        ),
+        RegVariant(
+            url = "https://api.cloudflareclient.com/v0a5641/reg",
+            clientVersion = "a-6.38.9-5641",
+            userAgent = "1.1.1.1/6.38.9-5641 (Android 16.0.0)",
+            model = "PC",
+            osVersion = "16.0.0",
+            legacyLinux = false
+        ),
+        RegVariant(
+            url = "https://api.cloudflareclient.com/v0a2158/reg",
+            clientVersion = "a-6.30-2158",
+            userAgent = "okhttp/3.12.1",
+            model = "PC",
+            osVersion = "",
+            legacyLinux = true
+        )
     )
 
     suspend fun register(): WarpRegistration = withContext(Dispatchers.IO) {
@@ -58,17 +85,24 @@ object WarpApi {
                     put("fcm_token", "")
                     put("tos", tosTimestamp())
                     put("model", variant.model)
-                    put("type", variant.type)
                     put("locale", "en_US")
+                    if (variant.legacyLinux) {
+                        put("type", "Linux")
+                    } else {
+                        put("serial_number", "")
+                        put("os_version", variant.osVersion)
+                        put("key_type", "curve25519")
+                        put("tunnel_type", "wireguard")
+                    }
                 }
 
                 val connection = (URL(variant.url).openConnection() as HttpsURLConnection).apply {
                     requestMethod = "POST"
-                    connectTimeout = 20_000
-                    readTimeout = 20_000
+                    connectTimeout = 15_000
+                    readTimeout = 15_000
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                    setRequestProperty("User-Agent", "okhttp/3.12.1")
+                    setRequestProperty("User-Agent", variant.userAgent)
                     setRequestProperty("CF-Client-Version", variant.clientVersion)
                     setRequestProperty("Accept", "application/json")
                     setRequestProperty("Connection", "close")
@@ -81,7 +115,7 @@ object WarpApi {
                 val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
 
                 if (code !in 200..299) {
-                    problems.add("${variant.type}/${variant.clientVersion}: HTTP $code")
+                    problems.add("${variant.clientVersion}: HTTP $code")
                     continue
                 }
 
@@ -94,15 +128,12 @@ object WarpApi {
                 val addressV4 = addresses?.optString("v4").orEmpty().ifBlank { "172.16.0.2" }
                 val addressV6 = addresses?.optString("v6").orEmpty().ifBlank { null }
 
-                var endpoint = peer.optJSONObject("endpoint")?.optString("host").orEmpty()
-                if (endpoint.isBlank()) {
-                    endpoint = peer.optJSONObject("endpoint")?.optString("v4").orEmpty()
-                }
-                if (endpoint.isBlank()) {
-                    endpoint = "162.159.192.1:2408"
-                } else if (endpoint.endsWith(":0")) {
-                    endpoint = endpoint.substringBeforeLast(":") + ":2408"
-                }
+                val endpointObject = peer.optJSONObject("endpoint")
+                val host = endpointObject?.optString("host").orEmpty().ifBlank {
+                    endpointObject?.optString("v4").orEmpty()
+                }.ifBlank { "engage.cloudflareclient.com" }
+                val port = endpointObject?.optJSONArray("ports")?.optInt(0, 2408) ?: 2408
+                val endpoint = if (host.contains(":")) host else "$host:$port"
 
                 return@withContext WarpRegistration(
                     privateKey = privateKey,
@@ -112,10 +143,11 @@ object WarpApi {
                     addressV6 = addressV6,
                     endpoint = endpoint,
                     deviceId = json.optString("id"),
-                    token = json.optString("token")
+                    token = json.optString("token"),
+                    warpEnabled = json.optBoolean("warp_enabled", true)
                 )
             } catch (e: Exception) {
-                problems.add("${variant.type}/${variant.clientVersion}: ${e.javaClass.simpleName}: ${e.message}")
+                problems.add("${variant.clientVersion}: ${e.javaClass.simpleName}: ${e.message}")
             }
         }
 

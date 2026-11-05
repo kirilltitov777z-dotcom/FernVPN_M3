@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FernVPN</string>
+    <string name="app_tagline">Private internet · WARP</string>
+
+    <string name="onb_title_welcome">Welcome to FernVPN</string>
+    <string name="onb_text_welcome">A private internet through Cloudflare WARP. All traffic goes inside an encrypted WireGuard tunnel — no accounts, no logs, keys never leave your phone.</string>
+    <string name="onb_title_connect">One tap</string>
+    <string name="onb_text_connect">Tap the big button and allow the VPN connection in the system dialog. The app will pick a working WARP server and port itself, so the first connection can take up to half a minute.</string>
+    <string name="onb_title_pet">A fern grows with you</string>
+    <string name="onb_text_pet">While the tunnel is on, a small fern next to the button grows. Turn the VPN off and it pauses. You can hide it in settings at any time.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+
+    <string name="guide">How to use</string>
+    <string name="guide_hint">Show the first-launch guide again</string>
+    <string name="open">Open</string>
 
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
     <string name="status_connected">Connected · WARP</string>
     <string name="status_disconnected">Not connected</string>
     <string name="status_connecting">Connecting…</string>
+    <string name="status_tuning">Finding a server %1$d/%2$d</string>
     <string name="status_error">Connection error</string>
 
     <string name="settings">Settings</string>
@@ -28,6 +44,7 @@
     <string name="pet_stage_grown">Grown fern</string>
     <string name="pet_stage_bloom">Blooming fern</string>
     <string name="pet_next_stage">next stage in %1$s</string>
+    <string name="pet_max_stage">fully grown</string>
 
     <string name="language">Language</string>
     <string name="language_system">System</string>

@@ -6,12 +6,17 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,9 +36,9 @@ import com.fern.vpn.R
 
 data class PetStage(val thresholdSeconds: Long, val titleRes: Int)
 
+/** The fern starts as a sprout — there is no seed stage. */
 private val stages = listOf(
-    PetStage(0L, R.string.pet_stage_seed),
-    PetStage(60L, R.string.pet_stage_sprout),
+    PetStage(0L, R.string.pet_stage_sprout),
     PetStage(1_800L, R.string.pet_stage_young),
     PetStage(7_200L, R.string.pet_stage_grown),
     PetStage(86_400L, R.string.pet_stage_bloom)
@@ -47,46 +52,62 @@ val petStageCount: Int = stages.size
 fun PetPlant(totalSeconds: Long, modifier: Modifier = Modifier) {
     val index = petStageIndex(totalSeconds)
     val stage = stages[index]
-
-    val leaf = Color(0xFF7C9A7A)
-    val leafDark = Color(0xFF5E7A60)
-    val flower = Color(0xFFCBBD9E)
-    val soil = MaterialTheme.colorScheme.outlineVariant
     val next = stages.getOrNull(index + 1)
+    val scheme = MaterialTheme.colorScheme
+
+    val leaf = Color(0xFF8FD3AC)
+    val leafDark = Color(0xFF5F9E7F)
+    val flower = scheme.tertiary
+    val soil = scheme.outlineVariant
 
     val sway = rememberInfiniteTransition(label = "petSway")
     val angle by sway.animateFloat(
-        initialValue = -2.4f,
-        targetValue = 2.4f,
+        initialValue = -2.2f,
+        targetValue = 2.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3200, easing = LinearEasing),
+            animation = tween(durationMillis = 3400, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "petAngle"
     )
 
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Canvas(
-            modifier = Modifier
-                .size(96.dp)
-                .graphicsLayer { rotationZ = angle }
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        color = scheme.surface.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            drawPlant(index, leaf, leafDark, flower, soil)
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = stringResource(stage.titleRes),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (next != null) {
-            val remaining = (next.thresholdSeconds - totalSeconds).coerceAtLeast(0L)
-            Text(
-                text = stringResource(R.string.pet_next_stage, formatDuration(remaining)),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-            )
+            Canvas(
+                modifier = Modifier
+                    .size(44.dp)
+                    .graphicsLayer { rotationZ = angle }
+            ) {
+                drawPlant(index, leaf, leafDark, flower, soil)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = stringResource(stage.titleRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (next != null) {
+                        stringResource(
+                            R.string.pet_next_stage,
+                            formatDuration((next.thresholdSeconds - totalSeconds).coerceAtLeast(0L))
+                        )
+                    } else {
+                        stringResource(R.string.pet_max_stage)
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant.copy(alpha = 0.85f)
+                )
+            }
         }
     }
 }
@@ -105,48 +126,44 @@ private fun DrawScope.drawPlant(
 
     drawOval(
         color = soil.copy(alpha = 0.5f),
-        topLeft = Offset(width * 0.24f, baseY - width * 0.02f),
-        size = Size(width * 0.52f, width * 0.06f)
+        topLeft = Offset(width * 0.22f, baseY - width * 0.02f),
+        size = Size(width * 0.56f, width * 0.06f)
     )
 
-    if (stageIndex == 0) {
-        drawCircle(color = leafDark, radius = width * 0.045f, center = Offset(baseX, baseY - width * 0.05f))
-        return
-    }
-
     val stemHeight = when (stageIndex) {
-        1 -> height * 0.28f
-        2 -> height * 0.45f
-        3 -> height * 0.6f
-        else -> height * 0.66f
+        0 -> height * 0.34f
+        1 -> height * 0.52f
+        2 -> height * 0.66f
+        else -> height * 0.74f
     }
 
     drawLine(
         color = leafDark,
         start = Offset(baseX, baseY),
         end = Offset(baseX, baseY - stemHeight),
-        strokeWidth = 4f,
+        strokeWidth = 3.5f,
         cap = StrokeCap.Round
     )
 
     val pairs = when (stageIndex) {
-        1 -> 1
-        2 -> 2
-        3 -> 3
+        0 -> 1
+        1 -> 2
+        2 -> 3
         else -> 3
     }
 
     for (leafIndex in 0 until pairs) {
-        val y = baseY - stemHeight * (0.32f + 0.19f * leafIndex)
-        val length = width * (0.15f + 0.028f * leafIndex)
-        rotate(degrees = -22f, pivot = Offset(baseX, y)) {
+        val y = baseY - stemHeight * (0.34f + 0.19f * leafIndex)
+        val length = width * (0.20f + 0.03f * leafIndex)
+        val sway = if (leafIndex % 2 == 0) -4f else 4f
+        rotate(degrees = -22f + sway, pivot = Offset(baseX, y)) {
             drawOval(
                 color = leaf,
                 topLeft = Offset(baseX - length, y - length * 0.34f),
                 size = Size(length, length * 0.68f)
             )
         }
-        rotate(degrees = 22f, pivot = Offset(baseX, y)) {
+        rotate(degrees = 22f + sway, pivot = Offset(baseX, y)) {
             drawOval(
                 color = leafDark,
                 topLeft = Offset(baseX, y - length * 0.34f),
@@ -155,15 +172,15 @@ private fun DrawScope.drawPlant(
         }
     }
 
-    if (stageIndex >= 4) {
+    if (stageIndex >= 3) {
         drawCircle(
-            color = flower,
-            radius = width * 0.075f,
+            color = flower.copy(alpha = 0.30f),
+            radius = width * 0.13f,
             center = Offset(baseX, baseY - stemHeight)
         )
         drawCircle(
-            color = flower.copy(alpha = 0.35f),
-            radius = width * 0.12f,
+            color = flower,
+            radius = width * 0.075f,
             center = Offset(baseX, baseY - stemHeight)
         )
     }

@@ -27,6 +27,9 @@ object SettingsRepository {
     private const val KEY_DEVICE_ID = "device_id"
     private const val KEY_TOKEN = "token"
 
+    private const val KEY_ONBOARDING = "onboarding_done"
+    private const val KEY_LAST_ENDPOINT = "last_endpoint"
+
     private lateinit var prefs: SharedPreferences
 
     private val _petEnabled = MutableStateFlow(true)
@@ -41,6 +44,9 @@ object SettingsRepository {
     private val _totalBytes = MutableStateFlow(0L)
     val totalBytesFlow: StateFlow<Long> = _totalBytes.asStateFlow()
 
+    private val _onboardingDone = MutableStateFlow(false)
+    val onboardingDone: StateFlow<Boolean> = _onboardingDone.asStateFlow()
+
     fun init(context: Context) {
         if (this::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -48,6 +54,21 @@ object SettingsRepository {
         _language.value = prefs.getString(KEY_LANG, "system") ?: "system"
         _totalSeconds.value = prefs.getLong(KEY_TOTAL_SECONDS, 0L)
         _totalBytes.value = prefs.getLong(KEY_TOTAL_RX, 0L) + prefs.getLong(KEY_TOTAL_TX, 0L)
+        _onboardingDone.value = prefs.getBoolean(KEY_ONBOARDING, false)
+    }
+
+    fun setOnboardingDone() {
+        if (!this::prefs.isInitialized) return
+        prefs.edit().putBoolean(KEY_ONBOARDING, true).apply()
+        _onboardingDone.value = true
+    }
+
+    fun lastEndpoint(): String? =
+        if (this::prefs.isInitialized) prefs.getString(KEY_LAST_ENDPOINT, null) else null
+
+    fun setLastEndpoint(endpoint: String) {
+        if (!this::prefs.isInitialized) return
+        prefs.edit().putString(KEY_LAST_ENDPOINT, endpoint).apply()
     }
 
     fun setPetEnabled(enabled: Boolean) {

@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FernVPN</string>
+    <string name="app_tagline">Приватный интернет · WARP</string>
+
+    <string name="onb_title_welcome">Добро пожаловать в FernVPN</string>
+    <string name="onb_text_welcome">Приватный интернет через Cloudflare WARP. Весь трафик идёт внутри шифрованного туннеля WireGuard — без аккаунтов и логов, ключи не покидают телефон.</string>
+    <string name="onb_title_connect">Одно касание</string>
+    <string name="onb_text_connect">Нажмите большую кнопку и разрешите подключение VPN в системном окне. Приложение само подберёт рабочий сервер и порт WARP, поэтому первое подключение может занять до полуминуты.</string>
+    <string name="onb_title_pet">Папоротник растёт с вами</string>
+    <string name="onb_text_pet">Пока туннель включён, рядом с кнопкой растёт маленький папоротник. Выключите VPN — рост остановится. Питомца можно скрыть в настройках.</string>
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_start">Начать</string>
+
+    <string name="guide">Как пользоваться</string>
+    <string name="guide_hint">Показать инструкцию первого запуска</string>
+    <string name="open">Открыть</string>
 
     <string name="connect">Подключить</string>
     <string name="disconnect">Отключить</string>
     <string name="status_connected">Подключено · WARP</string>
     <string name="status_disconnected">Не подключено</string>
     <string name="status_connecting">Подключение…</string>
+    <string name="status_tuning">Подбираю сервер %1$d/%2$d</string>
     <string name="status_error">Ошибка подключения</string>
 
     <string name="settings">Настройки</string>
@@ -28,6 +44,7 @@
     <string name="pet_stage_grown">Выросший папоротник</string>
     <string name="pet_stage_bloom">Цветущий папоротник</string>
     <string name="pet_next_stage">следующая стадия через %1$s</string>
+    <string name="pet_max_stage">максимальная стадия</string>
 
     <string name="language">Язык</string>
     <string name="language_system">Системный</string>
